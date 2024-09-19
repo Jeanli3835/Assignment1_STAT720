@@ -1,0 +1,225 @@
+---
+title: "Assignment1"
+author: "Jean(Naien) Li"
+format: pdf
+editor: visual
+---
+
+## preparation for the packages
+
+```{r }
+library("tidyverse")
+library("rgl")
+library("splines")
+library("performance")
+library("see")
+library("qqplotr")
+library("faraway")
+library("patchwork")
+library("MASS")
+library("ggplot2")
+library("GGally")
+library("effects")
+```
+
+## question 1
+
+Download the data and input and tidy up the dataset with our needs or demands. Therefore, the tidy up condition is n!=NA and gdp!=NA and pop!=NA.
+
+```{r}
+Olympic_dataset<-read.csv("olymp1.csv")
+View(Olympic_dataset)
+Original_n<-length(Olympic_dataset$team)
+Olympic_dataset<-Olympic_dataset[!is.na(Olympic_dataset$n) & !is.na(Olympic_dataset$gdp) & !is.na(Olympic_dataset$pop), ]
+n<-length(Olympic_dataset$team)
+```
+
+a.  As the rules of thumb, with the samoling size is 1623, then the maximum number of predictors is 1623/15= 108. Because the number of variables is 6, according to the type of the response variable, I will pick 1/2 predictor variables for the response variable. And I would like to predict the total medal count.
+
+```{r}
+New_Olympicdataset<-Olympic_dataset|>group_by(team, year,gdp,pop)|>summarise(across(n,sum))
+plot(New_Olympicdataset$gdp, New_Olympicdataset$n)
+plot(New_Olympicdataset$pop, New_Olympicdataset$n)
+plot3d(New_Olympicdataset$gdp,New_Olympicdataset$pop,New_Olympicdataset$n)
+model_1<-lm(New_Olympicdataset$n~New_Olympicdataset$gdp+New_Olympicdataset$pop)
+summary(model_1)
+model_2<-lm(New_Olympicdataset$n~New_Olympicdataset$gdp)
+summary(model_2)
+model_3<-lm(New_Olympicdataset$n~New_Olympicdataset$pop)
+summary(model_3)
+names(New_Olympicdataset)[names(New_Olympicdataset)=="n"]<-"Total_count"
+```
+
+We make the plotting between the response variable and the predictors. And create the basic linear regression models, deciding to pick pop variable off from the original model.
+
+b.  Now, the response variable is the total number of medal and the presictor variable is gdp. As the R\^2 of basic linear model is almost 0.62. Then try to use the different transforming to the predictor or/ and response variable, as well the splines. As the coefficient of the predictor has the small value, as states as a reasonable threshold for a small slope.
+
+c.  
+
+```{r }
+sumary(model_2)
+```
+
+d.  
+
+```{r }
+check_model(model_2,check = c("linearity", "homogeneity","outlier", "qq"))
+
+plot(model_2)
+```
+
+We draw the graph diagnostics with the linearity, homogeneity, normality(the assumption of the linear model); the outlier(graph by the plot() as the check_model() shows that it can't display.) Through the graph, the linearity, heteroscedasticity and the non-normality exists the problems, means that we need to try the solution to solve the problems by transformation, like log-transformation, Box-Cox transformation. Besides, we need to consider to drop the values out, by the graph and drop the number of the observation of 100, 520, 521. comment: we don't calculated by the 4/n threshold and just drop the value by the graph, greater than the 0.5.
+
+```{r}
+New_Olympicdataset<-New_Olympicdataset[-c(100,520,521),]
+
+spline_model<-lm(New_Olympicdataset$Total_count~ns(New_Olympicdataset$gdp,df=5))
+summary(spline_model)
+check_model(spline_model)
+#gdp_limit<-range(New_Olympicdataset$gdp)
+#grid<-seq(gdp_limit[1],gdp_limit[2])
+#predicts<-predict(spline_model,grid)
+#plot(New_Olympicdataset$gdp,New_Olympicdataset$Total_count)
+#alines(model_1)
+```
+
+```{r }
+plot(log(New_Olympicdataset$gdp),New_Olympicdataset$Total_count)
+log_model<-lm(New_Olympicdataset$Total_count~log(New_Olympicdataset$gdp))
+summary(log_model)
+check_model(log_model)
+```
+
+The log_model2 is better than the log_model1 and the original linear model(model_2)
+
+```{r}
+plot(log(New_Olympicdataset$gdp),log(New_Olympicdataset$Total_count+1))
+log_model2<-lm(log(Total_count+1)~log(gdp),data=New_Olympicdataset)
+summary(log_model2)
+performance::check_model(log_model2)
+```
+
+From the fitting model process, we know that the R\^2 is lower than the basic linear model with log transformation to predictor and response variable. But the problems has been developed by the log transformation to the response variable and the predictor variable.
+
+f.  
+
+```{r }
+ggcoef(log_model2)
+scale_logmodel2<-lm(log(New_Olympicdataset$Total_count+1)~log(scale(New_Olympicdataset$gdp,center = TRUE,scale = FALSE)))
+check_model(scale_logmodel2)
+ggcoef(scale_logmodel2)
+```
+
+It doesn't need to do the scale and center to the predictor, because the original coefficient is more clear positive influence to the model.
+
+g.  
+
+```{r }
+object<-effects::allEffects(log_model2)
+plot(object)
+```
+
+## question 2
+
+Create the 4\*4 daatset and input Comment: set the control group expressed by A; level Ⅰ expressed by B; level Ⅱ expressed by C: level Ⅲ by D
+
+```{r }
+Q2_dataset<-read.csv("Q2.csv")
+```
+
+contrasts are between the control group with the average of each level group by the contr.treatment
+
+```{r }
+Q2_dataset$group<-factor(Q2_dataset$group)
+contrasts(Q2_dataset$group)<-contr.treatment(levels(Q2_dataset$group))
+Q2_model1<-lm(Q2_dataset$result~Q2_dataset$group)
+coef(Q2_model1)
+```
+
+contrasts are successive differences among the non-control by the contr.helmert()
+
+```{r }
+Q2_dataset$group<-factor(Q2_dataset$group)
+contrasts(Q2_dataset$group)<-contr.helmert(levels(Q2_dataset$group))
+Q2_model2<-lm(Q2_dataset$result~Q2_dataset$group)
+coef(Q2_model2)
+```
+
+## Question 3
+
+```{r }
+between_num <- function(a, b){ as.numeric(b[1] < a & a < b[2])}
+
+sim_fun <- function(n,df, True_slope, sd = 1, intercept = 0) {
+    x <- runif(n)
+    y <- (intercept+True_slope*x)+sd*rt(n,df )
+    dataset<-data.frame(x, y)
+    model<-lm(y~x,data = dataset)
+    slope<-coef(model)[2]
+    p_value<-coef(summary(model))[2,"Pr(>|t|)"]
+    interval<-confint(model)[2,]
+    invole<-between_num(True_slope,interval)
+    result<-list()
+    result$slope<-slope
+    result$p_value<-p_value
+    result$invole<-invole
+    result
+}
+
+Simulate_time<-function(time,n,df, True_slope,alpha){
+  slope_vec<-rep(0,time)
+  P_vector<-rep(0,time)
+  coverage_num<-rep(0,time)
+  for (i in 1:time) {
+    result<-sim_fun(n,df, True_slope, sd = 1, intercept = 0)
+    slope_vec[i]<-result$slope
+    P_vector[i]<-result$p_value
+    coverage_num[i]<-result$invole
+  }
+  bias<-mean(slope_vec-True_slope)
+  standard_error<-sd(slope_vec)
+  RMSE<-sqrt(mean((slope_vec-True_slope)^2))
+  power<-mean(P_vector[P_vector<alpha])
+  Coverage<-mean(coverage_num)
+  Result<-list()
+  Result$bias<-bias
+  Result$RMSE<-RMSE
+  Result$power<-power
+  Result$Coverage<-Coverage
+  Result
+}
+
+set.seed(100)
+True_slope<-1
+time<-100
+alpha<-0.05
+df<-2 
+set_n<-c(10,20,100)
+data<-data.frame(df=rep(0,27),n=rep(0,27),bias=rep(0,27),RMSE=rep(0,27),power=rep(0,),coverage=rep(0,27))
+j<-1
+while(df<=50){
+  
+  for (i in 1:3 ) {
+    n<-set_n[i]
+    Result<-Simulate_time(time,n,df,True_slope,alpha)
+    data$df[j]<-df
+    data$n[j]<-n
+    data$bias[j]<-Result$bias
+    data$RMSE[j]<-Result$RMSE
+    data$power[j]<-Result$power
+    data$coverage[j]<-Result$Coverage
+    j<-j+1
+  }
+  df<-df+6
+}
+
+
+
+plot(data$df,data$bias,col=as.factor(data$n),cex=2,pch=21)
+plot(data$df,data$RMSE,col=as.factor(data$n),cex=2,pch=21)
+plot(data$df,data$power,col=as.factor(data$n),cex=2,pch=21)
+plot(data$df,data$coverage,col=as.factor(data$n),cex=2,pch=21)
+View(data)
+## when I get updated to the R4.4.1 version, I can't use the ggplot to plotting. And now using plot() to create the basic plotting and add the simulation data.
+
+```
