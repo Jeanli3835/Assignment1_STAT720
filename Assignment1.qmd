@@ -1,13 +1,18 @@
 ---
 title: "Assignment1"
 author: "Jean(Naien) Li"
-format: pdf
+format:
+  html:
+   embed-resources: true
 editor: visual
 ---
+
+**BMB**: if you're going to make an HTML, it's convenient to use `embed-resources: true` as above (you had `format: pdf` but uploaded an HTML file ...)
 
 ## preparation for the packages
 
 ```{r }
+## BMB set messages=FALSE to remove chaff
 library("tidyverse")
 library("rgl")
 library("splines")
@@ -24,7 +29,7 @@ library("effects")
 
 ## question 1
 
-Download the data and input and tidy up the dataset with our needs or demands. Therefore, the tidy up condition is n!=NA and gdp!=NA and pop!=NA.
+Download the data and input and tidy up the dataset with our needs or demands. Therefore, the tidy up condition is `n!=NA` and `gdp!=NA` and `pop!=NA`. **BMB**: could use `subset()` or `dplyr::filter()` to do this slightly more cleanly. What is the impact of removing incomplete cases here?
 
 ```{r}
 Olympic_dataset<-read.csv("olymp1.csv")
@@ -34,7 +39,9 @@ Olympic_dataset<-Olympic_dataset[!is.na(Olympic_dataset$n) & !is.na(Olympic_data
 n<-length(Olympic_dataset$team)
 ```
 
-a.  As the rules of thumb, with the samoling size is 1623, then the maximum number of predictors is 1623/15= 108. Because the number of variables is 6, according to the type of the response variable, I will pick 1/2 predictor variables for the response variable. And I would like to predict the total medal count.
+a.  As the rules of thumb, with a sample size of 1623, then the maximum number of predictors is 1623/15= 108. Because the number of variables is 6, according to the type of the response variable, I will pick 1/2 predictor variables for the response variable. (**BMB**: not entirely clear?) And I would like to predict the total medal count.
+
+**BMB**: don't plot responses vs predictors before deciding on a model ... why are you fitting univariate models???
 
 ```{r}
 New_Olympicdataset<-Olympic_dataset|>group_by(team, year,gdp,pop)|>summarise(across(n,sum))
@@ -52,7 +59,9 @@ names(New_Olympicdataset)[names(New_Olympicdataset)=="n"]<-"Total_count"
 
 We make the plotting between the response variable and the predictors. And create the basic linear regression models, deciding to pick pop variable off from the original model.
 
-b.  Now, the response variable is the total number of medal and the presictor variable is gdp. As the R\^2 of basic linear model is almost 0.62. Then try to use the different transforming to the predictor or/ and response variable, as well the splines. As the coefficient of the predictor has the small value, as states as a reasonable threshold for a small slope.
+**BMB**: this seems to be a bad approach (univariate screening of individual variables, followed by fitting a single-variable model) ... why approach modeling this way?
+
+b.  Now, the response variable is the total number of medals and the predictor variable is gdp. As the R\^2 of basic linear model is almost 0.62. (**BMB**: what do you conclude from this?) Then try to use the different transforming to the predictor or/ and response variable, as well the splines. As the coefficient of the predictor has the small value, as states as a reasonable threshold for a small slope.
 
 c.  
 
@@ -69,6 +78,8 @@ plot(model_2)
 ```
 
 We draw the graph diagnostics with the linearity, homogeneity, normality(the assumption of the linear model); the outlier(graph by the plot() as the check_model() shows that it can't display.) Through the graph, the linearity, heteroscedasticity and the non-normality exists the problems, means that we need to try the solution to solve the problems by transformation, like log-transformation, Box-Cox transformation. Besides, we need to consider to drop the values out, by the graph and drop the number of the observation of 100, 520, 521. comment: we don't calculated by the 4/n threshold and just drop the value by the graph, greater than the 0.5.
+
+**BMB** automatically dropping influential points seems like a bad idea to me. How do we know that this will help overall?
 
 ```{r}
 New_Olympicdataset<-New_Olympicdataset[-c(100,520,521),]
@@ -101,6 +112,8 @@ performance::check_model(log_model2)
 
 From the fitting model process, we know that the R\^2 is lower than the basic linear model with log transformation to predictor and response variable. But the problems has been developed by the log transformation to the response variable and the predictor variable.
 
+**BMB**: shouldn't judge which model to use by looking only at $R^2$ (too much temptation to overfit ...)
+
 f.  
 
 ```{r }
@@ -110,7 +123,9 @@ check_model(scale_logmodel2)
 ggcoef(scale_logmodel2)
 ```
 
-It doesn't need to do the scale and center to the predictor, because the original coefficient is more clear positive influence to the model.
+**BMB**: it rarely makes sense to include the intercept in a coefficient plot (or more generally to do inference on it)
+
+It doesn't need to do the scale and center to the predictor, because the original coefficient is more clear positive influence to the model.  **BMB**: yes, but if you're going put more than one thing on a coefficient plot you have to make sure they have the same units.
 
 g.  
 
@@ -121,7 +136,7 @@ plot(object)
 
 ## question 2
 
-Create the 4\*4 daatset and input Comment: set the control group expressed by A; level Ⅰ expressed by B; level Ⅱ expressed by C: level Ⅲ by D
+Create the 4\*4 dataset [**BMB**: spell-check please ...] and input Comment: set the control group expressed by A; level Ⅰ expressed by B; level Ⅱ expressed by C: level Ⅲ by D
 
 ```{r }
 Q2_dataset<-read.csv("Q2.csv")
@@ -145,6 +160,8 @@ Q2_model2<-lm(Q2_dataset$result~Q2_dataset$group)
 coef(Q2_model2)
 ```
 
+**BMB**: you really haven't answered the question I asked in the homework ...
+
 ## Question 3
 
 ```{r }
@@ -166,6 +183,8 @@ sim_fun <- function(n,df, True_slope, sd = 1, intercept = 0) {
     result
 }
 
+## BMB: 'time' is a bit confusing (I thought it had to something
+##  to do with a time series). I might have called this a 'replicate' ... ?
 Simulate_time<-function(time,n,df, True_slope,alpha){
   slope_vec<-rep(0,time)
   P_vector<-rep(0,time)
@@ -197,6 +216,7 @@ df<-2
 set_n<-c(10,20,100)
 data<-data.frame(df=rep(0,27),n=rep(0,27),bias=rep(0,27),RMSE=rep(0,27),power=rep(0,),coverage=rep(0,27))
 j<-1
+## BMB: might be clearer to do this with a for loop over a sequence?
 while(df<=50){
   
   for (i in 1:3 ) {
@@ -214,7 +234,7 @@ while(df<=50){
 }
 
 
-
+## BMB: these pictures might be clearer with type="l" or type="b"
 plot(data$df,data$bias,col=as.factor(data$n),cex=2,pch=21)
 plot(data$df,data$RMSE,col=as.factor(data$n),cex=2,pch=21)
 plot(data$df,data$power,col=as.factor(data$n),cex=2,pch=21)
@@ -222,4 +242,12 @@ plot(data$df,data$coverage,col=as.factor(data$n),cex=2,pch=21)
 View(data)
 ## when I get updated to the R4.4.1 version, I can't use the ggplot to plotting. And now using plot() to create the basic plotting and add the simulation data.
 
+## BMB: can you please send me (ideally on Piazza) exactly what problems/errors
+## you experienced when you tried to use ggplot2 with R 4.4.1?
+
 ```
+
+**BMB**: do you have any conclusions from these results?
+
+**mark**: 6.5. Question 3 is fine (although conclusions would have been nice). For question 2, I think you missed the point of the question (if you don't understand the question, it's better to ask for clarification ...). For question 1, your approach isn't crazy, but it's definitely suboptimal and goes against most of the advice that Harrell gives in chapter 4 of his book (which was the first reading assignment).
+
