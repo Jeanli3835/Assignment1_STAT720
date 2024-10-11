@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.57">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Jean(Naien) Li">
+
+<title>Assignment2</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="Assignment2_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Assignment2_files/libs/quarto-html/quarto.js"></script>
+<script src="Assignment2_files/libs/quarto-html/popper.min.js"></script>
+<script src="Assignment2_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Assignment2_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Assignment2_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Assignment2_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Assignment2_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Assignment2_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Assignment2_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Assignment2</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Jean(Naien) Li </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lme4)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(Matrix)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(mlmRev)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DHARMa)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dotwhisker)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(effects)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(bbmle)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(brglm2)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arm)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lme4)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(brglm2)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(car)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pscl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="question-1" class="level2">
+<h2 class="anchored" data-anchor-id="question-1">Question 1</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data<span class="ot">&lt;-</span>mlmRev<span class="sc">::</span>Contraception</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>use_num<span class="ot">&lt;-</span><span class="fu">as.numeric</span>(data<span class="sc">$</span>use)<span class="sc">-</span><span class="dv">1</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>sample_num<span class="ot">&lt;-</span><span class="fu">nrow</span>(data)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>urban<span class="ot">&lt;-</span><span class="fu">as.factor</span>(data<span class="sc">$</span>urban)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>data<span class="sc">$</span>age<span class="ot">&lt;-</span><span class="fu">as.factor</span>(data<span class="sc">$</span>age)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="a." class="level3">
+<h3 class="anchored" data-anchor-id="a.">a.</h3>
+<p>As the response variable is “Use”, as the binary discrete variable. The response variable fits the Bernouli distribution. By the Harrell’s rules, I will choose the “age”, and the “urban”, with the link function is log(u)=log(u/1-u)=linear predictors. ### b.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>data<span class="sc">|&gt;</span> <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x=</span>use))<span class="sc">+</span><span class="fu">geom_bar</span>()<span class="sc">+</span><span class="fu">geom_text</span>(<span class="at">stat =</span> <span class="st">"count"</span>, <span class="fu">aes</span>(<span class="at">label =</span> ..count..), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>) <span class="sc">+</span><span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Count of the different categories of use"</span>,<span class="at">x=</span><span class="st">"use"</span>,<span class="at">y=</span><span class="st">"Count"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>data<span class="sc">|&gt;</span> <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x=</span>use,<span class="at">fill =</span> urban))<span class="sc">+</span><span class="fu">geom_bar</span>( <span class="at">position=</span><span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.5</span>))<span class="sc">+</span><span class="fu">theme_bw</span>()<span class="sc">+</span><span class="fu">geom_text</span>(<span class="at">stat =</span> <span class="st">"count"</span>, <span class="fu">aes</span>(<span class="at">label =</span> ..count..), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>) <span class="sc">+</span><span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Count of the different categories of use by urban"</span>,<span class="at">x=</span><span class="st">"use"</span>,<span class="at">y=</span><span class="st">"Count"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-3-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data<span class="sc">|&gt;</span> <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> use )) <span class="sc">+</span><span class="fu">geom_bar</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">position=</span><span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.5</span>))<span class="sc">+</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()<span class="sc">+</span><span class="fu">facet_wrap</span>(<span class="sc">~</span>urban)<span class="sc">+</span><span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Count of the different categories of use by urban"</span>,<span class="at">x=</span><span class="st">"use"</span>,<span class="at">y=</span><span class="st">"Count"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-3-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>data<span class="sc">|&gt;</span> <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x=</span>age,<span class="at">fill =</span>use))<span class="sc">+</span><span class="fu">geom_bar</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">position=</span><span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.5</span>))<span class="sc">+</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()<span class="sc">+</span><span class="fu">geom_text</span>(<span class="at">stat =</span> <span class="st">"count"</span>, <span class="fu">aes</span>(<span class="at">label =</span> ..count..), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>) <span class="sc">+</span><span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Count of the different categories of use by age"</span>,<span class="at">x=</span><span class="st">"use"</span>,<span class="at">y=</span><span class="st">"Count"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-3-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>data<span class="sc">|&gt;</span> <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> use )) <span class="sc">+</span><span class="fu">geom_bar</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">position=</span><span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.5</span>))<span class="sc">+</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()<span class="sc">+</span><span class="fu">facet_wrap</span>(<span class="sc">~</span>age)<span class="sc">+</span><span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Count of the different categories of use by age"</span>,<span class="at">x=</span><span class="st">"use"</span>,<span class="at">y=</span><span class="st">"Count"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-3-5.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="c." class="level3">
+<h3 class="anchored" data-anchor-id="c.">c.</h3>
+<p>It’s the typic logistic regression of Generalized linear regression with the binary link function</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>model<span class="ot">&lt;-</span><span class="fu">glm</span>(use_num<span class="sc">~</span>age<span class="sc">+</span>urban,<span class="at">data=</span>data,<span class="at">family =</span> binomial)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = use_num ~ age + urban, family = binomial, data = data)
+
+Coefficients:
+              Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)   -2.04033    0.76462  -2.668  0.00762 ** 
+age-13.559     0.52995    0.89287   0.594  0.55282    
+age-12.56      0.77425    0.89582   0.864  0.38743    
+age-12.559     0.55871    0.83986   0.665  0.50590    
+age-11.56     -0.31359    1.31252  -0.239  0.81117    
+age-11.559     0.42834    0.81819   0.524  0.60061    
+age-10.56      1.52950    1.05734   1.447  0.14802    
+age-10.559     1.06247    0.80604   1.318  0.18746    
+age-9.56       1.34596    1.60922   0.836  0.40293    
+age-9.5599     0.92988    0.80065   1.161  0.24548    
+age-8.56      17.60639 1455.39773   0.012  0.99035    
+age-8.5599     1.27902    0.80141   1.596  0.11050    
+age-7.56       0.94171    0.95811   0.983  0.32566    
+age-7.5599     1.45989    0.80308   1.818  0.06909 .  
+age-6.56     -13.59698  435.32750  -0.031  0.97508    
+age-6.5599     1.34670    0.80563   1.672  0.09460 .  
+age-5.56      -0.01349    1.31762  -0.010  0.99183    
+age-5.5599     1.50875    0.79997   1.886  0.05929 .  
+age-4.56       2.04033    1.60768   1.269  0.20440    
+age-4.5599     1.62558    0.80411   2.022  0.04322 *  
+age-3.56      -0.18962    1.32943  -0.143  0.88658    
+age-3.5599     1.88319    0.81343   2.315  0.02061 *  
+age-2.56       2.04033    1.25883   1.621  0.10506    
+age-2.5599     1.87692    0.79884   2.350  0.01880 *  
+age-1.56       0.80149    1.14092   0.702  0.48237    
+age-1.5599     1.81492    0.79990   2.269  0.02327 *  
+age-0.56       1.34718    1.44383   0.933  0.35079    
+age-0.5599     2.23808    0.80259   2.789  0.00529 ** 
+age0.44        1.62483    0.79491   2.044  0.04095 *  
+age1.44        1.81570    0.80676   2.251  0.02441 *  
+age2.44        1.84725    0.80266   2.301  0.02137 *  
+age3.44        1.64406    0.81646   2.014  0.04405 *  
+age4.44        1.97995    0.80960   2.446  0.01446 *  
+age5.44        1.61231    0.81872   1.969  0.04892 *  
+age6.44        1.37381    0.81533   1.685  0.09199 .  
+age7.44        2.57937    0.84156   3.065  0.00218 ** 
+age8.44        1.30843    0.81293   1.610  0.10750    
+age9.44        1.91026    0.84424   2.263  0.02365 *  
+age10.44       1.47942    0.81376   1.818  0.06906 .  
+age11.44       1.14776    0.84896   1.352  0.17638    
+age12.44       1.83435    0.84875   2.161  0.03068 *  
+age13.44       1.45275    0.86082   1.688  0.09148 .  
+age14.4399   -13.52574 1455.39773  -0.009  0.99258    
+age14.44       1.53542    0.85039   1.806  0.07099 .  
+age15.44       0.22655    0.94252   0.240  0.81005    
+age16.44       0.40563    0.89104   0.455  0.64894    
+age17.44       0.64271    0.86524   0.743  0.45760    
+age18.44       0.50494    0.87364   0.578  0.56329    
+age19.4399    16.91202 1029.12175   0.016  0.98689    
+age19.44      -0.32885    0.97853  -0.336  0.73682    
+urbanY         0.69437    0.10761   6.453  1.1e-10 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 2590.9  on 1933  degrees of freedom
+Residual deviance: 2392.8  on 1883  degrees of freedom
+AIC: 2494.8
+
+Number of Fisher Scoring iterations: 14</code></pre>
+</div>
+</div>
+</section>
+<section id="d." class="level3">
+<h3 class="anchored" data-anchor-id="d.">d.</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>DHARMa<span class="sc">::</span><span class="fu">simulateResiduals</span>(model,<span class="at">plot =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Object of Class DHARMa with simulated residuals based on 250 simulations with refit = FALSE . See ?DHARMa::simulateResiduals for help. 
+ 
+Scaled residual values: 0.3890018 0.01522543 0.3622426 0.1447625 0.5776909 0.1191886 0.1214822 0.1998735 0.03249985 0.1332241 0.8293435 0.3070008 0.3086376 0.06445804 0.1576984 0.9129954 0.06977626 0.9674841 0.7849278 0.6822686 ...</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>output<span class="ot">&lt;-</span>DHARMa<span class="sc">::</span><span class="fu">simulateResiduals</span>(model)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>DHARMa<span class="sc">::</span><span class="fu">testDispersion</span>(output)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-5-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    DHARMa nonparametric dispersion test via sd of residuals fitted vs.
+    simulated
+
+data:  simulationOutput
+dispersion = 1.0002, p-value = 0.976
+alternative hypothesis: two.sided</code></pre>
+</div>
+</div>
+<p>I think the DHARMa packasge with some functions is the best. As the generalized linear model with the bernouli response variable, setting the link function and observe the dispersion parameter of the respnse variable fitted with the generalized linear model. First, whether the link function fittes the probality distribution by qq plot(normal, exponential family). Actually, the model is fitted to the assumption. Second, estimate the dispersion parameter(probably to 1). And use the person test and the estimate is 1. Not overdispersion.</p>
+</section>
+<section id="e." class="level3">
+<h3 class="anchored" data-anchor-id="e.">e.</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>dotwhisker<span class="sc">::</span><span class="fu">dwplot</span>(model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>effect<span class="ot">&lt;-</span>effects<span class="sc">::</span><span class="fu">allEffects</span>(model)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(effect)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-6-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>I choose the “dotwhisker” and “effects” two package, that show me the age and the urban can’t reject H0 statistical significantly. But they have the linear relationship with the response variable.To select the two packages, concentrate on the effect statistical significantly and the whether the linear relationship.</p>
+</section>
+</section>
+<section id="question-2" class="level2">
+<h2 class="anchored" data-anchor-id="question-2">Question 2</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>g_url <span class="ot">&lt;-</span> <span class="st">"https://raw.githubusercontent.com/bbolker/mm_workshops/master/data/gopherdat2.csv"</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>g_data <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(g_url)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>g_data<span class="sc">$</span>year<span class="ot">&lt;-</span><span class="fu">as.factor</span>(g_data<span class="sc">$</span>year)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="a.-1" class="level3">
+<h3 class="anchored" data-anchor-id="a.-1">a.</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>g_data<span class="sc">|&gt;</span><span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x=</span>shells))<span class="sc">+</span><span class="fu">geom_bar</span>()<span class="sc">+</span><span class="fu">geom_text</span>(<span class="at">stat =</span> <span class="st">"count"</span>, <span class="fu">aes</span>(<span class="at">label =</span> ..count..), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>) <span class="sc">+</span><span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Count of the different number of shells"</span>,<span class="at">x=</span><span class="st">"shells"</span>,<span class="at">y=</span><span class="st">"Count"</span>)<span class="sc">+</span><span class="fu">scale_x_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">10</span>), <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">10</span>,<span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>g_data<span class="sc">|&gt;</span><span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x=</span>shells,<span class="at">fill =</span> year))<span class="sc">+</span><span class="fu">geom_bar</span>( <span class="at">position=</span><span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.5</span>))<span class="sc">+</span><span class="fu">theme_bw</span>()<span class="sc">+</span><span class="fu">geom_text</span>(<span class="at">stat =</span> <span class="st">"count"</span>, <span class="fu">aes</span>(<span class="at">label =</span> ..count..), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>) <span class="sc">+</span><span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Count of the different number of shells with year"</span>,<span class="at">x=</span><span class="st">"shells"</span>,<span class="at">y=</span><span class="st">"Count"</span>)<span class="sc">+</span><span class="fu">scale_x_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">10</span>), <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">10</span>,<span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-8-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>g_data<span class="sc">|&gt;</span> <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> shells )) <span class="sc">+</span><span class="fu">geom_bar</span>(</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">position=</span><span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.5</span>))<span class="sc">+</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()<span class="sc">+</span><span class="fu">facet_wrap</span>(<span class="sc">~</span>year)<span class="sc">+</span><span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Count of the different number of shells by year"</span>,<span class="at">x=</span><span class="st">"shells"</span>,<span class="at">y=</span><span class="st">"Count"</span>)<span class="sc">+</span><span class="fu">scale_x_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">10</span>), <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">10</span>,<span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-8-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>g_data<span class="sc">|&gt;</span><span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x=</span><span class="fu">as.factor</span>(shells),<span class="at">y=</span>prev))<span class="sc">+</span><span class="fu">geom_boxplot</span>()<span class="sc">+</span><span class="fu">facet_wrap</span>(<span class="sc">~</span>year)<span class="sc">+</span><span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"The different shells with the range of prev"</span>,<span class="at">x=</span><span class="st">"shells"</span>,<span class="at">y=</span><span class="st">"prev"</span>)<span class="sc">+</span> <span class="fu">coord_flip</span>()<span class="sc">+</span><span class="fu">theme_bw</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-8-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>We make the plotting with the year and prev. In 2024, not identity or clear relation between prev and shells. But in 2005 and 2006, it has the linear relation between prev and shells.</p>
+</section>
+<section id="b." class="level3">
+<h3 class="anchored" data-anchor-id="b.">b.</h3>
+<p>The rate as smapling sote area, the family as the Possion distribution. Offset is the log(area), non coefficienct with the model.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>g_model1_possion<span class="ot">&lt;-</span><span class="fu">glm</span>(shells<span class="sc">~</span>year<span class="sc">+</span>prev<span class="sc">+</span><span class="fu">offset</span>(<span class="fu">log</span>(Area)),<span class="at">data=</span>g_data,<span class="at">family =</span> <span class="st">'poisson'</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>g_model1quasi<span class="ot">&lt;-</span><span class="fu">glm</span>(shells<span class="sc">~</span>year<span class="sc">+</span>prev<span class="sc">+</span><span class="fu">offset</span>(<span class="fu">log</span>(Area)),<span class="at">data=</span>g_data,<span class="at">family =</span>  quasipoisson)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>g_model1_nb<span class="ot">&lt;-</span>MASS<span class="sc">::</span><span class="fu">glm.nb</span>(shells<span class="sc">~</span>year<span class="sc">+</span>prev<span class="sc">+</span><span class="fu">offset</span>(<span class="fu">log</span>(Area)),<span class="at">data=</span>g_data)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(g_model1_possion)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = shells ~ year + prev + offset(log(Area)), family = "poisson", 
+    data = g_data)
+
+Coefficients:
+            Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept) -3.19732    0.27850 -11.481  &lt; 2e-16 ***
+year2005    -0.64486    0.35639  -1.809   0.0704 .  
+year2006    -0.42876    0.31301  -1.370   0.1708    
+prev         0.02113    0.00431   4.903 9.44e-07 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 49.800  on 29  degrees of freedom
+Residual deviance: 22.483  on 26  degrees of freedom
+AIC: 84.337
+
+Number of Fisher Scoring iterations: 5</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(g_model1quasi)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = shells ~ year + prev + offset(log(Area)), family = quasipoisson, 
+    data = g_data)
+
+Coefficients:
+             Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept) -3.197317   0.256981 -12.442 1.87e-12 ***
+year2005    -0.644858   0.328853  -1.961   0.0607 .  
+year2006    -0.428759   0.288828  -1.484   0.1497    
+prev         0.021134   0.003977   5.313 1.47e-05 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for quasipoisson family taken to be 0.8514408)
+
+    Null deviance: 49.800  on 29  degrees of freedom
+Residual deviance: 22.483  on 26  degrees of freedom
+AIC: NA
+
+Number of Fisher Scoring iterations: 5</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(g_model1_nb)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+MASS::glm.nb(formula = shells ~ year + prev + offset(log(Area)), 
+    data = g_data, init.theta = 19672.63411, link = log)
+
+Coefficients:
+             Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept) -3.197315   0.278515 -11.480  &lt; 2e-16 ***
+year2005    -0.644898   0.356420  -1.809   0.0704 .  
+year2006    -0.428754   0.313050  -1.370   0.1708    
+prev         0.021134   0.004311   4.902 9.47e-07 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for Negative Binomial(19672.63) family taken to be 1)
+
+    Null deviance: 49.794  on 29  degrees of freedom
+Residual deviance: 22.481  on 26  degrees of freedom
+AIC: 86.338
+
+Number of Fisher Scoring iterations: 1
+
+              Theta:  19673 
+          Std. Err.:  325479 
+Warning while fitting theta: iteration limit reached 
+
+ 2 x log-likelihood:  -76.338 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>DHARMa<span class="sc">::</span><span class="fu">simulateResiduals</span>(g_model1_possion,<span class="at">plot =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Object of Class DHARMa with simulated residuals based on 250 simulations with refit = FALSE . See ?DHARMa::simulateResiduals for help. 
+ 
+Scaled residual values: 0.04206502 0.5330109 0.5520363 0.7272805 0.5158833 0.8087703 0.2396851 0.7629875 0.8864874 0.348945 0.8709893 0.6529203 0.2713743 0.09904355 0.7860565 0.9881371 0.7388388 0.6747742 0.2901445 0.1941966 ...</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>DHARMa<span class="sc">::</span><span class="fu">simulateResiduals</span>(g_model1_nb,<span class="at">plot =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-9-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Object of Class DHARMa with simulated residuals based on 250 simulations with refit = FALSE . See ?DHARMa::simulateResiduals for help. 
+ 
+Scaled residual values: 0.1453553 0.04019381 0.5904405 0.7768138 0.659639 0.7628382 0.2999622 0.8274914 0.8133034 0.4080821 0.9097385 0.5568163 0.1014421 0.4994927 0.772393 0.9499679 0.5303545 0.5886005 0.3157332 0.2563053 ...</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>pearson1<span class="ot">&lt;-</span><span class="fu">sum</span>((g_data<span class="sc">$</span>shells<span class="sc">-</span>g_model1_possion<span class="sc">$</span>fitted.values)<span class="sc">^</span><span class="dv">2</span><span class="sc">/</span>g_model1_possion<span class="sc">$</span>fitted.values)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>disperson_pareameter1<span class="ot">&lt;-</span>pearson1<span class="sc">/</span>g_model1_possion<span class="sc">$</span>df.residual</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>pearson2<span class="ot">&lt;-</span><span class="fu">sum</span>((g_data<span class="sc">$</span>shells<span class="sc">-</span>g_model1quasi<span class="sc">$</span>fitted.values)<span class="sc">^</span><span class="dv">2</span><span class="sc">/</span>g_model1quasi<span class="sc">$</span>fitted.values)</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>disperson_pareameter2<span class="ot">&lt;-</span>pearson1<span class="sc">/</span>g_model1quasi<span class="sc">$</span>df.residual</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">resid</span>(g_model1quasi, <span class="at">type =</span> <span class="st">"pearson"</span>)<span class="sc">^</span><span class="dv">2</span>)<span class="sc">/</span>g_model1quasi<span class="sc">$</span>df.residual</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.8514406</code></pre>
+</div>
+</div>
+<p>We choose the model1 with the possion distribution, and the dispersion parameter is less than 1, almost 0.85/0.86. Diagnosis by two plots, it’s the good choice.</p>
+</section>
+<section id="c.-1" class="level3">
+<h3 class="anchored" data-anchor-id="c.-1">c.</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>g_model2_poisson<span class="ot">&lt;-</span>bbmle<span class="sc">::</span><span class="fu">mle2</span>(</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  shells<span class="sc">~</span> <span class="fu">dpois</span>(<span class="at">lambda=</span><span class="fu">exp</span>(log_lambda)),</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">parameters =</span> <span class="fu">list</span>(log_lambda<span class="sc">~</span>year<span class="sc">+</span>prev<span class="sc">+</span><span class="fu">offset</span>(<span class="fu">log</span>(Area))),</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> g_data,</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">start =</span> <span class="fu">list</span>(<span class="at">log_lambda=</span><span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="d.-1" class="level3">
+<h3 class="anchored" data-anchor-id="d.-1">d.</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>log_possion<span class="ot">&lt;-</span><span class="cf">function</span>(<span class="at">beta0=</span><span class="dv">1</span>,<span class="at">beta1=</span><span class="dv">1</span>,<span class="at">beta2=</span><span class="dv">1</span>,<span class="at">beta3=</span><span class="dv">1</span>){</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  model_matrix<span class="ot">&lt;-</span><span class="fu">model.matrix</span>(<span class="sc">~</span>year<span class="sc">+</span>prev)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  linear_relation<span class="ot">&lt;-</span>model_matrix<span class="sc">%*%</span><span class="fu">c</span>(beta0,beta1,beta2,beta3)</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  lambda<span class="ot">&lt;-</span><span class="fu">exp</span>(linear_relation)</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  result<span class="ot">&lt;-</span> <span class="sc">-</span><span class="fu">sum</span>(stats<span class="sc">::</span><span class="fu">dpois</span>(shells,lambda,<span class="at">log =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>  result</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>g_modelmlepossion<span class="ot">&lt;-</span>bbmle<span class="sc">::</span><span class="fu">mle2</span>(log_possion,<span class="at">data =</span> g_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="e.-1" class="level3">
+<h3 class="anchored" data-anchor-id="e.-1">e.</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>g1<span class="ot">&lt;-</span>g_model1_possion<span class="sc">$</span>coefficients</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>g2<span class="ot">&lt;-</span>g_model2_poisson<span class="sc">@</span>coef</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>g3<span class="ot">&lt;-</span>g_modelmlepossion<span class="sc">@</span>coef</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>parameter_compare<span class="ot">&lt;-</span><span class="fu">data.frame</span>(<span class="at">GLM=</span>g1,<span class="at">MLE_inter=</span>g2,<span class="at">MLE=</span>g3)</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>parameter_compare</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                    GLM   MLE_inter         MLE
+(Intercept) -3.19731743  0.06033215  0.06105967
+year2005    -0.64485763 -0.72034268 -0.72025454
+year2006    -0.42875881 -0.46031147 -0.45996355
+prev         0.02113395  0.02523674  0.02521959</code></pre>
+</div>
+</div>
+</section>
+<section id="f." class="level3">
+<h3 class="anchored" data-anchor-id="f.">f.</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>CI_GLE<span class="ot">&lt;-</span><span class="fu">confint</span>(g_model1_possion)</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>sd<span class="ot">&lt;-</span><span class="fu">sqrt</span>(<span class="fu">diag</span>(g_model2_poisson<span class="sc">@</span>vcov))</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>Mle_CI_min<span class="ot">&lt;-</span>g_model2_poisson<span class="sc">@</span>coef<span class="sc">-</span><span class="fu">qnorm</span>(<span class="dv">1</span><span class="fl">-0.05</span><span class="sc">/</span><span class="dv">2</span>)<span class="sc">*</span>sd</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>Mle_CI_max<span class="ot">&lt;-</span>g_model2_poisson<span class="sc">@</span>coef<span class="sc">+</span><span class="fu">qnorm</span>(<span class="dv">1</span><span class="fl">-0.5</span><span class="sc">/</span><span class="dv">2</span>)<span class="sc">*</span>sd</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>CI_MLE<span class="ot">&lt;-</span><span class="fu">c</span>(Mle_CI_min,Mle_CI_max)</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>sd2<span class="ot">&lt;-</span><span class="fu">sqrt</span>(<span class="fu">diag</span>(g_modelmlepossion<span class="sc">@</span>vcov))</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>Mle2_CI_min<span class="ot">&lt;-</span>g_modelmlepossion<span class="sc">@</span>coef<span class="sc">-</span><span class="fu">qnorm</span>(<span class="dv">1</span><span class="fl">-0.05</span><span class="sc">/</span><span class="dv">2</span>)<span class="sc">*</span>sd</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>Mle2_CI_max<span class="ot">&lt;-</span>g_modelmlepossion<span class="sc">@</span>coef<span class="sc">+</span><span class="fu">qnorm</span>(<span class="dv">1</span><span class="fl">-0.5</span><span class="sc">/</span><span class="dv">2</span>)<span class="sc">*</span>sd</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>CI_MLE2<span class="ot">&lt;-</span><span class="fu">c</span>(Mle2_CI_min,Mle2_CI_max)</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>CI_compare<span class="ot">&lt;-</span><span class="fu">list</span>(<span class="at">GLM=</span>CI_GLE,<span class="at">MLE1=</span>CI_MLE,<span class="at">MLE2=</span>CI_MLE2)</span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>CI_compare</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$GLM
+                  2.5 %      97.5 %
+(Intercept) -3.78047101 -2.68513102
+year2005    -1.37646427  0.03521203
+year2006    -1.05249570  0.18368304
+prev         0.01272002  0.02969948
+
+$MLE1
+log_lambda.(Intercept)    log_lambda.year2005    log_lambda.year2006 
+           -0.49909016            -1.41837599            -1.07530660 
+       log_lambda.prev log_lambda.(Intercept)    log_lambda.year2005 
+            0.01614114             0.25284825            -0.48012586 
+   log_lambda.year2006        log_lambda.prev 
+           -0.24867090             0.02836684 
+
+$MLE2
+      beta0       beta1       beta2       beta3       beta0       beta1 
+-0.49836264 -1.41828785 -1.07495868  0.01612400  0.25357577 -0.48003772 
+      beta2       beta3 
+-0.24832297  0.02834969 </code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="question-3" class="level2">
+<h2 class="anchored" data-anchor-id="question-3">Question 3</h2>
+<p>As the binary “HG” is the response variable and select the category “NV” and continous “EH” with the predictor variables.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>e_data<span class="ot">&lt;-</span>brglm2<span class="sc">::</span>endometrial</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>e_data<span class="sc">$</span>NV<span class="ot">&lt;-</span><span class="fu">as.factor</span>(e_data<span class="sc">$</span>NV)</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>e_data<span class="sc">|&gt;</span>ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x=</span><span class="fu">as.factor</span>(HG),<span class="at">y=</span>EH))<span class="sc">+</span><span class="fu">geom_boxplot</span>()<span class="sc">+</span><span class="fu">facet_wrap</span>(<span class="sc">~</span>NV)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>From the plottings and find that the variable “NV” has the vital influence on the “HG” and the “EH” exists the effect whrn “NV”=0.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>e_glm<span class="ot">&lt;-</span><span class="fu">glm</span>(HG<span class="sc">~</span>NV<span class="sc">+</span>EH,<span class="at">data =</span> e_data,<span class="at">family =</span> <span class="st">"binomial"</span>)</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(e_glm)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = HG ~ NV + EH, family = "binomial", data = e_data)
+
+Coefficients:
+             Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)    3.4201     1.2696   2.694 0.007062 ** 
+NV1           17.9894  1738.8255   0.010 0.991745    
+EH            -2.7891     0.8226  -3.391 0.000697 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 104.903  on 78  degrees of freedom
+Residual deviance:  56.378  on 76  degrees of freedom
+AIC: 62.378
+
+Number of Fisher Scoring iterations: 17</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>Disparameter_1<span class="ot">&lt;-</span><span class="fu">sum</span>(<span class="fu">resid</span>(e_glm,<span class="st">"pearson"</span>)<span class="sc">^</span><span class="dv">2</span>)<span class="sc">/</span>e_glm<span class="sc">$</span>df.residual</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>Disparameter_1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1.234006</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Overdispersion, more accurate model</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>e_bayes<span class="ot">&lt;-</span>arm<span class="sc">::</span><span class="fu">bayesglm</span>(HG<span class="sc">~</span>NV<span class="sc">+</span>EH, <span class="at">family =</span> <span class="st">"binomial"</span>,<span class="at">data =</span> e_data)</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(e_bayes)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+arm::bayesglm(formula = HG ~ NV + EH, family = "binomial", data = e_data)
+
+Coefficients:
+            Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)   3.1220     1.1431   2.731 0.006313 ** 
+NV1           3.1671     1.5555   2.036 0.041746 *  
+EH           -2.5653     0.7297  -3.516 0.000439 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 104.903  on 78  degrees of freedom
+Residual deviance:  57.154  on 76  degrees of freedom
+AIC: 63.154
+
+Number of Fisher Scoring iterations: 20</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>Disparameter_2<span class="ot">&lt;-</span><span class="fu">sum</span>(<span class="fu">resid</span>(e_bayes,<span class="st">"pearson"</span>)<span class="sc">^</span><span class="dv">2</span>)<span class="sc">/</span>e_glm<span class="sc">$</span>df.residual</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>Disparameter_2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1.050757</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="co"># better than first model</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>e_glm2<span class="ot">&lt;-</span><span class="fu">glm</span>(HG<span class="sc">~</span>NV<span class="sc">+</span>EH,<span class="at">family =</span> <span class="st">"binomial"</span>, <span class="at">method =</span> <span class="st">"brglmFit"</span>,<span class="at">data =</span> e_data)</span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(e_glm2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = HG ~ NV + EH, family = "binomial", data = e_data, 
+    method = "brglmFit")
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-1.7112  -0.6255  -0.3401   0.3112   2.7193  
+
+Coefficients:
+            Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)   3.1349     1.2089   2.593 0.009511 ** 
+NV1           2.8474     1.5790   1.803 0.071343 .  
+EH           -2.5785     0.7741  -3.331 0.000865 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 104.903  on 78  degrees of freedom
+Residual deviance:  57.394  on 76  degrees of freedom
+AIC:  63.394
+
+Type of estimator: AS_mixed (mixed bias-reducing adjusted score equations)
+Number of Fisher Scoring iterations: 7</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>Disparameter_3<span class="ot">&lt;-</span><span class="fu">sum</span>(<span class="fu">resid</span>(e_glm2)<span class="sc">^</span><span class="dv">2</span>)<span class="sc">/</span>e_glm2<span class="sc">$</span>df.residual</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="estimates" class="level3">
+<h3 class="anchored" data-anchor-id="estimates">1).Estimates</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>estimate<span class="ot">&lt;-</span><span class="fu">data.frame</span>(<span class="at">GLE=</span>e_glm<span class="sc">$</span>coefficients,<span class="at">Bayesglm=</span>e_bayes<span class="sc">$</span>coefficients,<span class="at">GLM2=</span>e_glm2<span class="sc">$</span>coefficients)</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>estimate</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                  GLE  Bayesglm      GLM2
+(Intercept)  3.420084  3.121955  3.134858
+NV1         17.989388  3.167128  2.847357
+EH          -2.789140 -2.565329 -2.578459</code></pre>
+</div>
+</div>
+</section>
+<section id="wald-and-likelihood-profile-ci" class="level3">
+<h3 class="anchored" data-anchor-id="wald-and-likelihood-profile-ci">2). Wald and likelihood profile CI</h3>
+<p>We can’t get the appropriate profile CI of glm1 and bayesglm. But we could get the Wald CI with the three different models.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>wald_CI<span class="ot">&lt;-</span><span class="fu">list</span>(<span class="at">GLM=</span>stats<span class="sc">::</span><span class="fu">confint.default</span>(e_glm),<span class="at">Bayesglm=</span>stats<span class="sc">::</span><span class="fu">confint.default</span>(e_bayes),<span class="at">GLM2=</span>stats<span class="sc">::</span><span class="fu">confint.default</span>(e_glm2))</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>wald_CI</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$GLM
+                    2.5 %      97.5 %
+(Intercept)     0.9318003    5.908367
+NV1         -3390.0459485 3426.024725
+EH             -4.4014294   -1.176851
+
+$Bayesglm
+                 2.5 %    97.5 %
+(Intercept)  0.8814492  5.362461
+NV1          0.1183379  6.215919
+EH          -3.9954684 -1.135191
+
+$GLM2
+                 2.5 %    97.5 %
+(Intercept)  0.7654455  5.504270
+NV1         -0.2473899  5.942104
+EH          -4.0956487 -1.061269</code></pre>
+</div>
+</div>
+</section>
+<section id="wald-likelihood-ratio-test-p-values" class="level3">
+<h3 class="anchored" data-anchor-id="wald-likelihood-ratio-test-p-values">3). Wald likelihood ratio-test p-values</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>P_value<span class="ot">&lt;-</span><span class="fu">data.frame</span>(<span class="at">GLM=</span><span class="fu">Anova</span>(e_glm,<span class="at">test=</span><span class="st">"LR"</span>)<span class="sc">$</span><span class="st">`</span><span class="at">Pr(&gt;Chisq)</span><span class="st">`</span>,<span class="at">Bayesglm=</span><span class="fu">Anova</span>(e_bayes,<span class="at">test=</span><span class="st">"LR"</span>)<span class="sc">$</span><span class="st">`</span><span class="at">Pr(&gt;Chisq)</span><span class="st">`</span>,<span class="at">GLM2=</span><span class="fu">Anova</span>(e_glm2,<span class="at">test=</span><span class="st">"LR"</span>)<span class="sc">$</span><span class="st">`</span><span class="at">Pr(&gt;Chisq)</span><span class="st">`</span>)</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a><span class="fu">row.names</span>(P_value)<span class="ot">&lt;-</span><span class="fu">c</span>(<span class="st">"NV"</span>,<span class="st">"EH"</span>)</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>P_value</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            GLM     Bayesglm         GLM2
+NV 0.0031848346 4.881108e-03 5.576041e-03
+EH 0.0000135718 2.038562e-05 2.313087e-05</code></pre>
+</div>
+</div>
+<p>By the dispersion and Wald CI, the best model is the e_glm2 and the coefficients of the two predictors are statistical siginificantly, reject to the estimator as zero.</p>
+</section>
+</section>
+<section id="question-4" class="level2">
+<h2 class="anchored" data-anchor-id="question-4">Question 4</h2>
+<p>The response variable is “art”, and the predictor variable are “fem”,“kid5”,“ment”.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>b_data<span class="ot">&lt;-</span>pscl<span class="sc">::</span>bioChemists</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>b_data<span class="sc">$</span>fem<span class="ot">&lt;-</span><span class="fu">as.factor</span>(b_data<span class="sc">$</span>fem)</span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>b_data<span class="sc">$</span>kid5<span class="ot">&lt;-</span><span class="fu">as.factor</span>(b_data<span class="sc">$</span>kid5)</span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>b_model<span class="ot">&lt;-</span>MASS<span class="sc">::</span><span class="fu">glm.nb</span>(art<span class="sc">~</span>fem<span class="sc">+</span>kid5<span class="sc">+</span>ment,<span class="at">data =</span> b_data)</span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a><span class="do">## let's build the functions of predictor variables, each type number of 125.</span></span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a>pro_kids<span class="ot">&lt;-</span><span class="fu">rep</span>(<span class="dv">0</span>,<span class="dv">4</span>)</span>
+<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a>pro_kids[<span class="dv">1</span>]<span class="ot">&lt;-</span><span class="fu">round</span>(<span class="fu">nrow</span>(b_data[b_data<span class="sc">$</span>kid5<span class="sc">==</span><span class="dv">0</span>,])<span class="sc">/</span><span class="fu">nrow</span>(b_data),<span class="dv">2</span>)<span class="sc">+</span><span class="fl">0.01</span></span>
+<span id="cb57-9"><a href="#cb57-9" aria-hidden="true" tabindex="-1"></a>pro_kids[<span class="dv">2</span>]<span class="ot">&lt;-</span><span class="fu">round</span>(<span class="fu">nrow</span>(b_data[b_data<span class="sc">$</span>kid5<span class="sc">==</span><span class="dv">1</span>,])<span class="sc">/</span><span class="fu">nrow</span>(b_data),<span class="dv">2</span>)</span>
+<span id="cb57-10"><a href="#cb57-10" aria-hidden="true" tabindex="-1"></a>pro_kids[<span class="dv">3</span>]<span class="ot">&lt;-</span><span class="fu">round</span>(<span class="fu">nrow</span>(b_data[b_data<span class="sc">$</span>kid5<span class="sc">==</span><span class="dv">2</span>,])<span class="sc">/</span><span class="fu">nrow</span>(b_data),<span class="dv">2</span>)</span>
+<span id="cb57-11"><a href="#cb57-11" aria-hidden="true" tabindex="-1"></a>pro_kids[<span class="dv">4</span>]<span class="ot">&lt;-</span><span class="fu">round</span>(<span class="fu">nrow</span>(b_data[b_data<span class="sc">$</span>kid5<span class="sc">==</span><span class="dv">3</span>,])<span class="sc">/</span><span class="fu">nrow</span>(b_data),<span class="dv">2</span>)</span>
+<span id="cb57-12"><a href="#cb57-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-13"><a href="#cb57-13" aria-hidden="true" tabindex="-1"></a>b_data<span class="sc">|&gt;</span>ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x=</span>ment))<span class="sc">+</span><span class="fu">geom_bar</span>()<span class="sc">+</span><span class="fu">xlim</span>(<span class="dv">0</span>,<span class="dv">20</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>est_lambda<span class="ot">&lt;-</span><span class="fu">median</span>(b_data<span class="sc">$</span>ment)</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>neg<span class="ot">&lt;-</span><span class="cf">function</span>(size,pro){</span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>  <span class="sc">-</span><span class="fu">sum</span>(<span class="fu">dnbinom</span>(ment,size,pro,<span class="at">log =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a>est<span class="ot">&lt;-</span>bbmle<span class="sc">::</span><span class="fu">mle2</span>(</span>
+<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a>  neg,</span>
+<span id="cb58-7"><a href="#cb58-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> b_data,</span>
+<span id="cb58-8"><a href="#cb58-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">start =</span> <span class="fu">list</span>(<span class="at">size=</span><span class="dv">2</span>,<span class="at">pro=</span><span class="fl">0.2</span>))</span>
+<span id="cb58-9"><a href="#cb58-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-10"><a href="#cb58-10" aria-hidden="true" tabindex="-1"></a>pro_gender<span class="ot">&lt;-</span><span class="fl">0.5</span></span>
+<span id="cb58-11"><a href="#cb58-11" aria-hidden="true" tabindex="-1"></a>pro_kids<span class="ot">&lt;-</span>pro_kids</span>
+<span id="cb58-12"><a href="#cb58-12" aria-hidden="true" tabindex="-1"></a>size<span class="ot">&lt;-</span>est<span class="sc">@</span>coef[<span class="dv">1</span>]; pro<span class="ot">&lt;-</span>est<span class="sc">@</span>coef[<span class="dv">2</span>]</span>
+<span id="cb58-13"><a href="#cb58-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-14"><a href="#cb58-14" aria-hidden="true" tabindex="-1"></a><span class="do">## The functions of the simulation </span></span>
+<span id="cb58-15"><a href="#cb58-15" aria-hidden="true" tabindex="-1"></a>simulation_once<span class="ot">&lt;-</span><span class="cf">function</span>(pro_gender,pro_kids,size,prob){</span>
+<span id="cb58-16"><a href="#cb58-16" aria-hidden="true" tabindex="-1"></a>  fem<span class="ot">&lt;-</span><span class="fu">rbinom</span>(<span class="dv">1000</span>,<span class="dv">1</span>,pro_gender)</span>
+<span id="cb58-17"><a href="#cb58-17" aria-hidden="true" tabindex="-1"></a>  fem[fem<span class="sc">==</span><span class="dv">0</span>]<span class="ot">&lt;-</span><span class="st">"Men"</span></span>
+<span id="cb58-18"><a href="#cb58-18" aria-hidden="true" tabindex="-1"></a>  fem[fem<span class="sc">==</span><span class="dv">1</span>]<span class="ot">&lt;-</span><span class="st">"Women"</span></span>
+<span id="cb58-19"><a href="#cb58-19" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb58-20"><a href="#cb58-20" aria-hidden="true" tabindex="-1"></a>  kids_class<span class="ot">&lt;-</span><span class="fu">c</span>(<span class="st">"0"</span>,<span class="st">"1"</span>,<span class="st">"2"</span>,<span class="st">"3"</span>)</span>
+<span id="cb58-21"><a href="#cb58-21" aria-hidden="true" tabindex="-1"></a>  kids<span class="ot">&lt;-</span><span class="fu">sample</span>(kids_class,<span class="at">size=</span><span class="dv">1000</span>,<span class="at">replace =</span> <span class="cn">TRUE</span>,<span class="at">prob =</span> pro_kids)</span>
+<span id="cb58-22"><a href="#cb58-22" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb58-23"><a href="#cb58-23" aria-hidden="true" tabindex="-1"></a>  ment<span class="ot">&lt;-</span><span class="fu">rnbinom</span>(<span class="at">n =</span> <span class="dv">1000</span>, size, prob)</span>
+<span id="cb58-24"><a href="#cb58-24" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb58-25"><a href="#cb58-25" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb58-26"><a href="#cb58-26" aria-hidden="true" tabindex="-1"></a>  predict_datafram<span class="ot">&lt;-</span><span class="fu">data.frame</span>(<span class="at">fem=</span>fem,<span class="at">kid5=</span>kids,<span class="at">ment=</span>ment)</span>
+<span id="cb58-27"><a href="#cb58-27" aria-hidden="true" tabindex="-1"></a>  predict_datafram<span class="sc">$</span>fem<span class="ot">&lt;-</span><span class="fu">as.factor</span>(predict_datafram<span class="sc">$</span>fem)</span>
+<span id="cb58-28"><a href="#cb58-28" aria-hidden="true" tabindex="-1"></a>  predict_datafram<span class="sc">$</span>kid5<span class="ot">&lt;-</span><span class="fu">as.factor</span>(predict_datafram<span class="sc">$</span>kid5)</span>
+<span id="cb58-29"><a href="#cb58-29" aria-hidden="true" tabindex="-1"></a>  art<span class="ot">&lt;-</span><span class="fu">as.integer</span>(<span class="fu">predict</span>(b_model,predict_datafram,<span class="at">type =</span> <span class="st">"response"</span>))</span>
+<span id="cb58-30"><a href="#cb58-30" aria-hidden="true" tabindex="-1"></a>  result<span class="ot">&lt;-</span><span class="fu">length</span>(art[art<span class="sc">==</span><span class="dv">0</span>])</span>
+<span id="cb58-31"><a href="#cb58-31" aria-hidden="true" tabindex="-1"></a>  result</span>
+<span id="cb58-32"><a href="#cb58-32" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb58-33"><a href="#cb58-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-34"><a href="#cb58-34" aria-hidden="true" tabindex="-1"></a>simulation<span class="ot">&lt;-</span><span class="cf">function</span>(pro_gender,pro_kids,size,prob,times){</span>
+<span id="cb58-35"><a href="#cb58-35" aria-hidden="true" tabindex="-1"></a>  number_zerobservation<span class="ot">&lt;-</span><span class="fu">rep</span>(<span class="dv">0</span>,times)</span>
+<span id="cb58-36"><a href="#cb58-36" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>times) {</span>
+<span id="cb58-37"><a href="#cb58-37" aria-hidden="true" tabindex="-1"></a>    number_zerobservation[i]<span class="ot">&lt;-</span><span class="fu">simulation_once</span>(pro_gender,pro_kids,size,prob)</span>
+<span id="cb58-38"><a href="#cb58-38" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb58-39"><a href="#cb58-39" aria-hidden="true" tabindex="-1"></a>  number_zerobservation</span>
+<span id="cb58-40"><a href="#cb58-40" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb58-41"><a href="#cb58-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-42"><a href="#cb58-42" aria-hidden="true" tabindex="-1"></a><span class="do">## train and compare to the number of art==0 from the original data.</span></span>
+<span id="cb58-43"><a href="#cb58-43" aria-hidden="true" tabindex="-1"></a>compare_original<span class="ot">&lt;-</span><span class="fu">as.integer</span>(<span class="fu">nrow</span>(b_data[b_data<span class="sc">$</span>art<span class="sc">==</span><span class="dv">0</span>,])<span class="sc">/</span><span class="fu">nrow</span>(b_data)<span class="sc">*</span><span class="dv">1000</span>)</span>
+<span id="cb58-44"><a href="#cb58-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-45"><a href="#cb58-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-46"><a href="#cb58-46" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb58-47"><a href="#cb58-47" aria-hidden="true" tabindex="-1"></a>result<span class="ot">&lt;-</span><span class="fu">simulation</span>(<span class="fl">0.5</span>,pro_kids,size,pro,<span class="dv">10000</span>)</span>
+<span id="cb58-48"><a href="#cb58-48" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(result,<span class="at">xlab =</span> <span class="st">"number of zero observation"</span>,<span class="at">main=</span><span class="st">"Histogram of the number of zero observation"</span>,<span class="at">col=</span><span class="st">"blue"</span>,<span class="at">border =</span> <span class="st">"black"</span>,<span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">300</span>))</span>
+<span id="cb58-49"><a href="#cb58-49" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v=</span>compare_original, <span class="at">col=</span><span class="st">"red"</span>, <span class="at">lwd=</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-19-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>DHARMa<span class="sc">::</span><span class="fu">testZeroInflation</span>(b_model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assignment2_files/figure-html/unnamed-chunk-19-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    DHARMa zero-inflation test via comparison to expected zeros with
+    simulation under H0 = fitted model
+
+data:  simulationOutput
+ratioObsSim = 0.98894, p-value = 0.832
+alternative hypothesis: two.sided</code></pre>
+</div>
+</div>
+<p>Actually, by the simulation result, the p value will be too small and it will be reject the H0 than the DHARMa fitted result.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

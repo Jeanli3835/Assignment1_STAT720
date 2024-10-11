@@ -1,0 +1,277 @@
+---
+title: "Assignment2"
+author: "Jean(Naien) Li"
+format: html
+editor: visual
+execute: 
+  warning: false
+---
+```{r }
+library(lme4)
+library(Matrix)
+library(mlmRev)
+library(DHARMa)
+library(dotwhisker)
+library(effects)
+library(MASS)
+library(bbmle)
+library(brglm2)
+library(arm)
+library(lme4)
+library(brglm2)
+library(car)
+library(pscl)
+```
+## Question 1
+```{r}
+data<-mlmRev::Contraception
+data$use_num<-as.numeric(data$use)-1
+sample_num<-nrow(data)
+data$urban<-as.factor(data$urban)
+data$age<-as.factor(data$age)
+```
+### a.
+As the response variable is "Use", as the binary discrete variable. The response variable fits the Bernouli distribution. By the Harrell's rules, I will choose the "age", and the "urban", with the link function is log(u)=log(u/1-u)=linear predictors.
+### b.
+```{r }
+data|> ggplot(aes(x=use))+geom_bar()+geom_text(stat = "count", aes(label = ..count..), vjust = -0.5) +labs(title = "Count of the different categories of use",x="use",y="Count")
+
+data|> ggplot(aes(x=use,fill = urban))+geom_bar( position=position_dodge(width = 0.5))+theme_bw()+geom_text(stat = "count", aes(label = ..count..), vjust = -0.5) +labs(title = "Count of the different categories of use by urban",x="use",y="Count")
+data|> ggplot(aes(x = use )) +geom_bar(
+    position=position_dodge(width = 0.5))+
+  theme_bw()+facet_wrap(~urban)+labs(title = "Count of the different categories of use by urban",x="use",y="Count")
+
+
+data|> ggplot(aes(x=age,fill =use))+geom_bar(
+    position=position_dodge(width = 0.5))+
+  theme_bw()+geom_text(stat = "count", aes(label = ..count..), vjust = -0.5) +labs(title = "Count of the different categories of use by age",x="use",y="Count")
+data|> ggplot(aes(x = use )) +geom_bar(
+    position=position_dodge(width = 0.5))+
+  theme_bw()+facet_wrap(~age)+labs(title = "Count of the different categories of use by age",x="use",y="Count")
+
+```
+### c.
+It's the typic logistic regression of Generalized linear regression with the binary link function
+```{r }
+model<-glm(use_num~age+urban,data=data,family = binomial)
+summary(model)
+```
+### d.
+```{r }
+DHARMa::simulateResiduals(model,plot = TRUE)
+output<-DHARMa::simulateResiduals(model)
+DHARMa::testDispersion(output)
+```
+I think the DHARMa packasge with some functions is the best. As the generalized linear model with the bernouli response variable, setting the link function and observe the dispersion parameter of the respnse variable fitted with the generalized linear model. First, whether the link function fittes the probality distribution by qq plot(normal, exponential family). Actually, the model is fitted to the assumption.
+Second, estimate the dispersion parameter(probably to 1). And use the person test and the estimate is 1.
+Not overdispersion.
+
+### e.
+```{r }
+dotwhisker::dwplot(model)
+effect<-effects::allEffects(model)
+plot(effect)
+```
+I choose the "dotwhisker" and "effects" two package, that show me the age and the urban can't reject H0 statistical significantly. But they have the linear relationship with the response variable.To select the two packages, concentrate on the effect statistical significantly and the whether the linear relationship.
+
+## Question 2
+```{r }
+g_url <- "https://raw.githubusercontent.com/bbolker/mm_workshops/master/data/gopherdat2.csv"
+g_data <- read.csv(g_url)
+g_data$year<-as.factor(g_data$year)
+```
+### a.
+```{r }
+g_data|>ggplot(aes(x=shells))+geom_bar()+geom_text(stat = "count", aes(label = ..count..), vjust = -0.5) +labs(title = "Count of the different number of shells",x="shells",y="Count")+scale_x_continuous(limits = c(-1, 10), breaks = seq(0,10,1))
+
+g_data|>ggplot(aes(x=shells,fill = year))+geom_bar( position=position_dodge(width = 0.5))+theme_bw()+geom_text(stat = "count", aes(label = ..count..), vjust = -0.5) +labs(title = "Count of the different number of shells with year",x="shells",y="Count")+scale_x_continuous(limits = c(-1, 10), breaks = seq(0,10,1))
+g_data|> ggplot(aes(x = shells )) +geom_bar(
+    position=position_dodge(width = 0.5))+
+  theme_bw()+facet_wrap(~year)+labs(title = "Count of the different number of shells by year",x="shells",y="Count")+scale_x_continuous(limits = c(-1, 10), breaks = seq(0,10,1))
+
+g_data|>ggplot(aes(x=as.factor(shells),y=prev))+geom_boxplot()+facet_wrap(~year)+labs(title = "The different shells with the range of prev",x="shells",y="prev")+ coord_flip()+theme_bw()
+```
+We make the plotting with the year and prev. In 2024, not identity or clear relation between prev and shells. But in 2005 and 2006, it has the linear relation between prev and shells. 
+
+### b.
+The rate as smapling sote area, the family as the Possion distribution. Offset is the log(area), non coefficienct with the model.
+```{r}
+g_model1_possion<-glm(shells~year+prev+offset(log(Area)),data=g_data,family = 'poisson')
+g_model1quasi<-glm(shells~year+prev+offset(log(Area)),data=g_data,family =  quasipoisson)
+g_model1_nb<-MASS::glm.nb(shells~year+prev+offset(log(Area)),data=g_data)
+summary(g_model1_possion)
+summary(g_model1quasi)
+summary(g_model1_nb)
+DHARMa::simulateResiduals(g_model1_possion,plot = TRUE)
+DHARMa::simulateResiduals(g_model1_nb,plot = TRUE)
+
+pearson1<-sum((g_data$shells-g_model1_possion$fitted.values)^2/g_model1_possion$fitted.values)
+disperson_pareameter1<-pearson1/g_model1_possion$df.residual
+pearson2<-sum((g_data$shells-g_model1quasi$fitted.values)^2/g_model1quasi$fitted.values)
+disperson_pareameter2<-pearson1/g_model1quasi$df.residual
+
+sum(resid(g_model1quasi, type = "pearson")^2)/g_model1quasi$df.residual
+```
+We choose the model1 with the possion distribution, and the dispersion parameter is less than 1, almost 0.85/0.86. Diagnosis by two plots, it's the good choice.
+
+### c.
+```{r }
+g_model2_poisson<-bbmle::mle2(
+  shells~ dpois(lambda=exp(log_lambda)),
+  parameters = list(log_lambda~year+prev+offset(log(Area))),
+  data = g_data,
+  start = list(log_lambda=1))
+              
+```
+
+### d.
+```{r }
+log_possion<-function(beta0=1,beta1=1,beta2=1,beta3=1){
+  model_matrix<-model.matrix(~year+prev)
+  linear_relation<-model_matrix%*%c(beta0,beta1,beta2,beta3)
+  lambda<-exp(linear_relation)
+  result<- -sum(stats::dpois(shells,lambda,log = TRUE))
+  result
+}
+g_modelmlepossion<-bbmle::mle2(log_possion,data = g_data)
+```
+
+### e.
+```{r}
+g1<-g_model1_possion$coefficients
+g2<-g_model2_poisson@coef
+g3<-g_modelmlepossion@coef
+parameter_compare<-data.frame(GLM=g1,MLE_inter=g2,MLE=g3)
+parameter_compare
+
+```
+### f.
+```{r }
+CI_GLE<-confint(g_model1_possion)
+
+sd<-sqrt(diag(g_model2_poisson@vcov))
+Mle_CI_min<-g_model2_poisson@coef-qnorm(1-0.05/2)*sd
+Mle_CI_max<-g_model2_poisson@coef+qnorm(1-0.5/2)*sd
+CI_MLE<-c(Mle_CI_min,Mle_CI_max)
+
+sd2<-sqrt(diag(g_modelmlepossion@vcov))
+Mle2_CI_min<-g_modelmlepossion@coef-qnorm(1-0.05/2)*sd
+Mle2_CI_max<-g_modelmlepossion@coef+qnorm(1-0.5/2)*sd
+CI_MLE2<-c(Mle2_CI_min,Mle2_CI_max)
+
+CI_compare<-list(GLM=CI_GLE,MLE1=CI_MLE,MLE2=CI_MLE2)
+CI_compare
+```
+## Question 3
+As the binary "HG" is the response variable and select the category "NV" and continous "EH" with the predictor variables.
+```{r }
+e_data<-brglm2::endometrial
+e_data$NV<-as.factor(e_data$NV)
+e_data|>ggplot2::ggplot(aes(x=as.factor(HG),y=EH))+geom_boxplot()+facet_wrap(~NV)
+```
+From the plottings and find that the variable "NV" has the vital influence on the "HG" and the "EH" exists the effect whrn "NV"=0.
+```{r }
+e_glm<-glm(HG~NV+EH,data = e_data,family = "binomial")
+summary(e_glm)
+Disparameter_1<-sum(resid(e_glm,"pearson")^2)/e_glm$df.residual
+Disparameter_1
+#Overdispersion, more accurate model
+
+e_bayes<-arm::bayesglm(HG~NV+EH, family = "binomial",data = e_data)
+summary(e_bayes)
+Disparameter_2<-sum(resid(e_bayes,"pearson")^2)/e_glm$df.residual
+Disparameter_2
+# better than first model
+
+e_glm2<-glm(HG~NV+EH,family = "binomial", method = "brglmFit",data = e_data)
+summary(e_glm2)
+Disparameter_3<-sum(resid(e_glm2)^2)/e_glm2$df.residual
+```
+### 1).Estimates
+```{r }
+estimate<-data.frame(GLE=e_glm$coefficients,Bayesglm=e_bayes$coefficients,GLM2=e_glm2$coefficients)
+estimate
+```
+### 2). Wald and likelihood profile CI
+We can't get the appropriate profile CI of glm1 and bayesglm. But we could get the Wald CI with the three different models.
+```{r }
+wald_CI<-list(GLM=stats::confint.default(e_glm),Bayesglm=stats::confint.default(e_bayes),GLM2=stats::confint.default(e_glm2))
+wald_CI
+```
+### 3). Wald likelihood ratio-test p-values
+```{r }
+P_value<-data.frame(GLM=Anova(e_glm,test="LR")$`Pr(>Chisq)`,Bayesglm=Anova(e_bayes,test="LR")$`Pr(>Chisq)`,GLM2=Anova(e_glm2,test="LR")$`Pr(>Chisq)`)
+row.names(P_value)<-c("NV","EH")
+P_value
+```
+By the dispersion and Wald CI, the best model is the e_glm2 and the coefficients of the two predictors are statistical siginificantly, reject to the estimator as zero.
+
+## Question 4
+The response variable is "art", and the predictor variable are "fem","kid5","ment".
+```{r }
+b_data<-pscl::bioChemists
+b_data$fem<-as.factor(b_data$fem)
+b_data$kid5<-as.factor(b_data$kid5)
+b_model<-MASS::glm.nb(art~fem+kid5+ment,data = b_data)
+
+## let's build the functions of predictor variables, each type number of 125.
+pro_kids<-rep(0,4)
+pro_kids[1]<-round(nrow(b_data[b_data$kid5==0,])/nrow(b_data),2)+0.01
+pro_kids[2]<-round(nrow(b_data[b_data$kid5==1,])/nrow(b_data),2)
+pro_kids[3]<-round(nrow(b_data[b_data$kid5==2,])/nrow(b_data),2)
+pro_kids[4]<-round(nrow(b_data[b_data$kid5==3,])/nrow(b_data),2)
+
+b_data|>ggplot2::ggplot(aes(x=ment))+geom_bar()+xlim(0,20)
+est_lambda<-median(b_data$ment)
+neg<-function(size,pro){
+  -sum(dnbinom(ment,size,pro,log = TRUE))
+}
+est<-bbmle::mle2(
+  neg,
+  data = b_data,
+  start = list(size=2,pro=0.2))
+
+pro_gender<-0.5
+pro_kids<-pro_kids
+size<-est@coef[1]; pro<-est@coef[2]
+
+## The functions of the simulation 
+simulation_once<-function(pro_gender,pro_kids,size,prob){
+  fem<-rbinom(1000,1,pro_gender)
+  fem[fem==0]<-"Men"
+  fem[fem==1]<-"Women"
+  
+  kids_class<-c("0","1","2","3")
+  kids<-sample(kids_class,size=1000,replace = TRUE,prob = pro_kids)
+  
+  ment<-rnbinom(n = 1000, size, prob)
+  
+  
+  predict_datafram<-data.frame(fem=fem,kid5=kids,ment=ment)
+  predict_datafram$fem<-as.factor(predict_datafram$fem)
+  predict_datafram$kid5<-as.factor(predict_datafram$kid5)
+  art<-as.integer(predict(b_model,predict_datafram,type = "response"))
+  result<-length(art[art==0])
+  result
+}
+
+simulation<-function(pro_gender,pro_kids,size,prob,times){
+  number_zerobservation<-rep(0,times)
+  for (i in 1:times) {
+    number_zerobservation[i]<-simulation_once(pro_gender,pro_kids,size,prob)
+  }
+  number_zerobservation
+}
+
+## train and compare to the number of art==0 from the original data.
+compare_original<-as.integer(nrow(b_data[b_data$art==0,])/nrow(b_data)*1000)
+
+
+set.seed(1)
+result<-simulation(0.5,pro_kids,size,pro,10000)
+hist(result,xlab = "number of zero observation",main="Histogram of the number of zero observation",col="blue",border = "black",xlim = c(0,300))
+abline(v=compare_original, col="red", lwd=2)
+
+DHARMa::testZeroInflation(b_model)
+```
+Actually, by the simulation result, the p value will be too small and it will be reject the H0 than the DHARMa fitted result.
