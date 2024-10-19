@@ -1,0 +1,29 @@
+if you're going to make HTML files you should try to make them 'standalone', e.g. https://stackoverflow.com/a/76848221/190277
+
+You say you're following Harrell's rules. Why are you choosing only two predictors?  (Alternately, why did you convert age to a factor? That's not mathematically wrong, but seems like an odd choice; a linear, polynomial, or spline model would probably make more sense.)
+
+It looks like you have a couple of age categories with complete separation (very large estimates and standard errors: `age-8.56`, `age-6.56`, `age14.4399`, `age19.4399` -- did you notice these?  This shows up in the effects plots too.
+
+Do you remember that you shouldn't bother testing for overdispersion with a binary outcome?
+
+Q2.  Try not to misspell 'poisson' in your variable names (`g_model1_possion`), it can be confusing ...
+
+Why did you fit three different models (and not decide on an appropriate model in advance)?
+
+You should use accessor methods (e.g. `residuals(model, type = "pearson")`) rather than re-computing Pearson residuals by hand (it's good to know what the actual computation is, but you should use the built-in method)
+
+It's not good practice to use variable names that are the same as built-in functions of objects (e.g. `model_matrix`)
+
+similarly, don't use `@coef` - use `coef()` (even more so for S4 classes/@ than for S3 classes/$) (ditto, `@vcov` vs. `vcov()`)
+
+You must have set your models up differently to get such different intercepts for GLM vs MLE_inter/MLE .. in fact, the later models don't have an offset term (`offset()` doesn't work in `bbmle` formulas, and you excluded the offset completely in your own log-likelihood function). Did you notice?
+
+
+Q3.
+
+There isn't a numerical way to choose the 'best' of these three models (you say "by dispersion and Wald CI" -- these models are all making different assumptions, so unless we count them all by (within-sample) predictive accuracy, we have to choose on first principle.
+
+Q4. I think you misunderstood the problem statement. You need to simulate based on the **observed predictor variables** (I did say to use the `simulate()` method, which does that ...)
+
+mark: 7/10
+
