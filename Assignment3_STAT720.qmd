@@ -1,0 +1,331 @@
+---
+title: "Assignment 3"
+format: html
+editor: visual
+
+---
+```{r global-options,include=FALSE}
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+```{r }
+library(Matrix)
+library(mlmRev)
+library(ggplot2)
+library(nlme)
+library(lme4)
+library(lmerTest)
+library(performance)
+library(DHARMa)
+library(merTools)
+library(glmmTMB)
+library(purrr)
+library(broom.mixed)
+library(pbkrtest)
+library(patchwork)
+
+```
+Input the data from the package and transform the data to the specific way and scale the numeric predictor.
+```{r }
+data<-mlmRev::ScotsSec
+View(data)
+data$social<-as.factor(data$social)
+data$primary<-as.factor(data$primary)
+data$sex<-as.factor(data$sex)
+data$verbal_scale<-scale(data$verbal)
+```
+
+## a
+setting attain as the response variable and social, sex, verbal as the fixed effects, in addition with the random effect with the primary as group variable(random slope effect).
+```{r}
+model_1<-lmerTest::lmer(attain~verbal_scale+sex+social+(verbal_scale+sex+social|primary),data,REML = TRUE)
+```
+
+## b.
+We have to check whether the model is sigular fit(too complex random effects overfitted)
+```{r}
+lme4::isSingular(model_1)
+performance::check_singularity(model_1) ## why the result is different?
+```
+And then the model is sigular fitted, fixed by method 1 and method 2
+```{r }
+# Method1
+# we use the summary() to find the smallest variance of the random effect estimators is verbal_scale, 0.0210
+# or by VarCorr()
+varcor_radomeffecr<-lme4::VarCorr(model_1)
+pca<-lme4::rePCA(model_1)
+
+# the variable corresponding to the largest absolute value in the last columne of the eigenvector matrix is the verbal_scale, same as method 1
+model_2<-lmerTest::lmer(attain~verbal_scale+sex+social+(sex+social|primary),data,REML = TRUE)
+# as the warnings, need to change the formate too simple
+model_2new<-lmerTest::lmer(attain~verbal_scale+sex+social+(0+sex+social|primary)+(1|primary),data,REML = TRUE)
+isSingular(model_2new)
+
+lme4::VarCorr(model_2new)
+lme4::rePCA(model_2new)
+# Then discard the "social" random effect variable.
+model_3<-lmerTest::lmer(attain~verbal_scale+sex+social+(sex|primary),data,REML = TRUE)
+lme4::isSingular(model_3)
+```
+
+## c.
+Diagnostics on the fitted model"model_3"
+```{r }
+performance::check_model(model_3)
+sim_output<-DHARMa::simulateResiduals(model_3)
+plot(sim_output)
+
+performance::check_model(lm(attain~verbal_scale+sex+social,data))
+```
+In conclusion, based on the diagnostic plots, the model closely aligns with the assumptions of the linear mixed model. This includes the conditional distribution for the dependent variable (y) and the random effects, which are assumed to follow a normal distribution. There are no influential points, and homogeneity of variance is observed. The fitted effects of the predictors show no signs of multicollinearity. However, it is important to note that there may be greater prediction errors.
+
+To compare the diagnostics, we can analyze the plots of the fitted effects from both the linear model and the linear mixed model (which includes random effects). Additionally, we should include a plot that assesses the assumption of the random effects parameter, referred to as "Normality of Random Effects."
+
+## d.
+fit the mixed model by other packages.
+```{r }
+model_nlm<-nlme::lme(attain~verbal_scale+sex+social, random= ~ sex|primary,data,method = "REML")
+
+model_glmmTMB <- glmmTMB::glmmTMB(attain ~ verbal_scale+sex+social+(sex | primary),data= data,REML = TRUE)
+```
+
+## e.
+Compare the different packages 
+```{r }
+models<-list("lmer"=model_3,"lme"=model_nlm,"glmmTMB"=model_glmmTMB)
+
+purrr::map_dfr(models,broom.mixed::glance,.id="model")
+```
+It's the same result.
+
+## f.
+Compare the different packages coefficients
+```{r }
+coefficients_dataframe<-purrr::map_dfr(models,~broom.mixed::tidy(., effects = "fixed"), .id = "model") |> dplyr::arrange(term)
+
+# Compare the Intercept term
+Intercept<-coefficients_dataframe|> dplyr::filter(term=="(Intercept)")|> dplyr::select("model","effect","term","estimate","std.error", "df","p.value")
+lmerlme_est<-all.equal(Intercept[1,4],Intercept[2,4],tolerance=10^-4)
+lmerlme_sd<-all.equal(Intercept[1,5],Intercept[2,5],tolerance=10^-4)
+lmerlme_df<-all.equal(Intercept[1,6],Intercept[2,6])
+lmerlme_pvalue<-all.equal(Intercept[1,7],Intercept[2,7],tolerance=10^-4)
+lmerglmmTMB_est<-all.equal(Intercept[1,4],Intercept[3,4],tolerance=10^-4)
+lmerglmmTMB_sd<-all.equal(Intercept[1,5],Intercept[3,5],tolerance=0.01)
+lmerglmmTMB_df<-all.equal(Intercept[1,6],Intercept[3,6])
+lmerglmmTMB_p<-all.equal(Intercept[1,7],Intercept[3,7],tolerance=10^-4)
+lmeglmmTMB_est<-all.equal(Intercept[2,4],Intercept[3,4],tolerance=10^-4)
+lmeglmmTMB_sd<-all.equal(Intercept[2,5],Intercept[3,5],tolerance=0.01)
+lmeglmmTMB_df<-all.equal(Intercept[2,6],Intercept[3,6],tolerance=1)
+lmeglmmTMB_pvalue<-all.equal(Intercept[2,7],Intercept[3,7],tolerance=10^-4)
+
+# Compare the sexF term
+sexF<-coefficients_dataframe|>dplyr::filter(term=="sexF")|>dplyr::select("model","effect","term","estimate","std.error", "df","p.value")
+lmerlme_est<-all.equal(sexF[1,4],sexF[2,4],tolerance=10^-4)
+lmerlme_sd<-all.equal(sexF[1,5],sexF[2,5],tolerance=10^-4)
+lmerlme_df<-all.equal(sexF[1,6],sexF[2,6])
+lmerlme_pvalue<-all.equal(sexF[1,7],sexF[2,7],tolerance=0.1)
+lmerglmmTMB_est<-all.equal(sexF[1,4],sexF[3,4],tolerance=10^-4)
+lmerglmmTMB_sd<-all.equal(sexF[1,5],sexF[3,5],tolerance=0.01)
+lmerglmmTMB_df<-all.equal(sexF[1,6],sexF[3,6])
+lmerglmmTMB_p<-all.equal(sexF[1,7],sexF[3,7],tolerance=0.1)
+lmeglmmTMB_est<-all.equal(sexF[2,4],sexF[3,4],tolerance=10^-4)
+lmeglmmTMB_sd<-all.equal(sexF[2,5],sexF[3,5],tolerance=0.01)
+lmeglmmTMB_df<-all.equal(sexF[2,6],sexF[3,6])
+lmeglmmTMB_pvalue<-all.equal(sexF[2,7],sexF[3,7],tolerance=0.1)
+
+# Compare the social1 term
+social1<-coefficients_dataframe|>dplyr::filter(term=="social1")|>dplyr::select("model","effect","term","estimate","std.error", "df","p.value")
+lmerlme_est<-all.equal(social1[1,4],social1[2,4],tolerance=10^-4)
+lmerlme_sd<-all.equal(social1[1,5],social1[2,5],tolerance=10^-4)
+lmerlme_df<-all.equal(social1[1,6],social1[2,6])
+lmerlme_pvalue<-all.equal(social1[1,7],social1[2,7],tolerance=10^-4)
+lmerglmmTMB_est<-all.equal(social1[1,4],social1[3,4],tolerance=10^-4)
+lmerglmmTMB_sd<-all.equal(social1[1,5],social1[3,5],tolerance=0.1)
+lmerglmmTMB_df<-all.equal(social1[1,6],social1[3,6])
+lmerglmmTMB_p<-all.equal(social1[1,7],social1[3,7],tolerance=10^-4)
+lmeglmmTMB_est<-all.equal(social1[2,4],social1[3,4],tolerance=10^-4)
+lmeglmmTMB_sd<-all.equal(social1[2,5],social1[3,5],tolerance=0.1)
+lmeglmmTMB_df<-all.equal(social1[2,6],social1[3,6])
+lmeglmmTMB_pvalue<-all.equal(social1[2,7],social1[3,7],tolerance=10^-4)
+
+# compare the social20 term
+social20<-coefficients_dataframe|>dplyr::filter(term=="social20")|>dplyr::select("model","effect","term","estimate","std.error", "df","p.value")
+lmerlme_est<-all.equal(social20[1,4],social20[2,4],tolerance=10^-4)
+lmerlme_sd<-all.equal(social20[1,5],social20[2,5],tolerance=10^-4)
+lmerlme_df<-all.equal(social20[1,6],social20[2,6],tolerance=0.1)
+lmerlme_pvalue<-all.equal(social20[1,7],social20[2,7],tolerance=10^-4)
+lmerglmmTMB_est<-all.equal(social20[1,4],social20[3,4],tolerance=10^-4)
+lmerglmmTMB_sd<-all.equal(social20[1,5],social20[3,5],tolerance=0.1)
+lmerglmmTMB_df<-all.equal(social20[1,6],social20[3,6])
+lmerglmmTMB_p<-all.equal(social20[1,7],social20[3,7],tolerance=10^-4)
+lmeglmmTMB_est<-all.equal(social20[2,4],social20[3,4],tolerance=10^-4)
+lmeglmmTMB_sd<-all.equal(social20[2,5],social20[3,5],tolerance=0.1)
+lmeglmmTMB_df<-all.equal(social20[2,6],social20[3,6])
+lmeglmmTMB_pvalue<-all.equal(social20[2,7],social20[3,7],tolerance=10^-4)
+
+# compare the social31 term
+social31<-coefficients_dataframe|>dplyr::filter(term=="social31")|>dplyr::select("model","effect","term","estimate","std.error", "df","p.value")
+lmerlme_est<-all.equal(social31[1,4],social31[2,4],tolerance=10^-4)
+lmerlme_sd<-all.equal(social31[1,5],social31[2,5],tolerance=10^-4)
+lmerlme_df<-all.equal(social31[1,6],social31[2,6],tolerance=0.1)
+lmerlme_pvalue<-all.equal(social31[1,7],social31[2,7],tolerance=10^-4)
+lmerglmmTMB_est<-all.equal(social31[1,4],social31[3,4],tolerance=10^-4)
+lmerglmmTMB_sd<-all.equal(social31[1,5],social31[3,5],tolerance=0.01)
+lmerglmmTMB_df<-all.equal(social31[1,6],social31[3,6])
+lmerglmmTMB_p<-all.equal(social31[1,7],social31[3,7],tolerance=10^-4)
+lmeglmmTMB_est<-all.equal(social31[2,4],social31[3,4],tolerance=10^-4)
+lmeglmmTMB_sd<-all.equal(social31[2,5],social31[3,5],tolerance=0.01)
+lmeglmmTMB_df<-all.equal(social31[2,6],social31[3,6])
+lmeglmmTMB_pvalue<-all.equal(social31[2,7],social31[3,7],tolerance=10^-4)
+
+# compare the  verbal_scale term
+verbal_scale<-coefficients_dataframe|>dplyr::filter(term=="verbal_scale")|>dplyr::select("model","effect","term","estimate","std.error", "df","p.value")
+lmerlme_est<-all.equal(verbal_scale[1,4],verbal_scale[2,4],tolerance=10^-4)
+lmerlme_sd<-all.equal(verbal_scale[1,5],verbal_scale[2,5],tolerance=10^-4)
+lmerlme_df<-all.equal(verbal_scale[1,6],verbal_scale[2,6],tolerance=0.1)
+lmerlme_pvalue<-all.equal(verbal_scale[1,7],verbal_scale[2,7],tolerance=10^-4)
+lmerglmmTMB_est<-all.equal(verbal_scale[1,4],verbal_scale[3,4],tolerance=10^-4)
+lmerglmmTMB_sd<-all.equal(verbal_scale[1,5],verbal_scale[3,5],tolerance=0.01)
+lmerglmmTMB_df<-all.equal(verbal_scale[1,6],verbal_scale[3,6])
+lmerglmmTMB_p<-all.equal(verbal_scale[1,7],verbal_scale[3,7],tolerance=10^-4)
+lmeglmmTMB_est<-all.equal(verbal_scale[2,4],verbal_scale[3,4],tolerance=10^-4)
+lmeglmmTMB_sd<-all.equal(verbal_scale[2,5],verbal_scale[3,5],tolerance=0.01)
+lmeglmmTMB_df<-all.equal(verbal_scale[2,6],verbal_scale[3,6])
+lmeglmmTMB_pvalue<-all.equal(verbal_scale[2,7],verbal_scale[3,7],tolerance=10^-4)
+
+```
+1).Intercept
+* lmer & lme- 
+estimation:equivalent; standard errors:equivalent; df:different; p value:equivalent
+* lmer & glmmTMB-
+estimation:equivalent; standard errors:very similar; df:NA; p value:equivalent
+* lme & glmmTMB-
+estimation:equivalent; standard errors:very similar; df:NA; p value:equivalent 
+
+2).sexF
+* lmer & lme- 
+estimation:equivalent; standard errors:equivalent; df:different; p value:slightly different
+* lmer & glmmTMB-
+estimation:equivalent; standard errors:equivalent; df:NA; p value:slightly different
+* lme & glmmTMB-
+estimation:equivalent; standard errors:very similar; df:NA; p value:slightly different
+
+3).social1
+* lmer & lme- 
+estimation:equivalent; standard errors:equivalent; df:different; p value:equivalent
+* lmer & glmmTMB-
+estimation:equivalent; standard errors:sightly different; df:NA; p value:equivalent
+* lme & glmmTMB-
+estimation:equivalent; standard errors:sightly different; df:NA; p value:equivalent
+
+4).social20
+* lmer & lme- 
+estimation:equivalent; standard errors:equivalent; df:slightly different; p value:equivalent
+* lmer & glmmTMB-
+estimation:equivalent; standard errors:sightly different; df:NA; p value:equivalent
+* lme & glmmTMB-
+estimation:equivalent; standard errors:sightly different; df:NA; p value:equivalent
+
+5).social31
+* lmer & lme- 
+estimation:equivalent; standard errors:equivalent; df:slightly different; p value:equivalent
+* lmer & glmmTMB-
+estimation:equivalent; standard errors:very similar; df:NA; p value:equivalent
+* lme & glmmTMB-
+estimation:equivalent; standard errors:very similar; df:NA; p value:equivalent
+
+6).verbal_scale
+* lmer & lme- 
+estimation:equivalent; standard errors:equivalent; df:slightly different; p value:equivalent
+* lmer & glmmTMB-
+estimation:equivalent; standard errors:very similar; df:NA; p value:equivalent
+* lme & glmmTMB-
+estimation:equivalent; standard errors:very similar; df:NA; p value:equivalent
+
+## g.
+compare the coefficient plot with the different models
+```{r }
+# method 1, by the ggplot with the data frame
+coefficients_dataframe$model<-as.factor(coefficients_dataframe$model)
+coefficients_dataframe$term<-as.factor(coefficients_dataframe$term)
+coefficients_dataframe|>dplyr::filter(term != "(Intercept)")|> ggplot2::ggplot(aes(y=term,x=estimate,colour=model ))+geom_point()+facet_wrap(~term,scales = "free")+labs(x="Estimate",title = "coefficient plot of the model fitted with the three different pakages")+theme_bw()
+
+# method 2, by the dotwhiskerpackage
+dotwhisker::dwplot(models,effects="fixed")+facet_wrap(~ term,scales = "free")+theme_bw()
+```
+## h.
+compare the two approaches that are to compute the denominator df
+```{r }
+dflmer_1<-coef(summary(model_3,ddf="Satterthwaite"))[,"df"]
+dflmer_2<-coef(summary(model_3,ddf = "Kenward-Roger"))[,"df"]
+dflme<-coef(summary(model_nlm))[,"DF"]
+compare_df<-data.frame(lmer_sa=dflmer_1,lmer_ken=dflmer_2,lme=dflme)
+
+compare_df
+```
+The two approaches will calculate different results for the degrees of freedom (df) within the same model. Although there are slight differences between them, the model created using the lme function remains unchanged regardless of the approach used. In contrast, the lmer function tends to produce more varied results. Overall, using lmer() is preferable for obtaining more accurate calculations of the degrees of freedom compared to lme().
+
+## i.
+```{r }
+random_effect_group<-lme4::ranef(model_3)$primary
+fixed_sexslope<-glmmTMB::fixef(model_3)["sexF"]
+random_effect_group$sex_deviation<-random_effect_group$sexF-fixed_sexslope
+colnames(random_effect_group)[1]="Intercept"
+
+random_effect_group|>ggplot2::ggplot(aes(x=Intercept,y=sex_deviation))+geom_point()+labs(x="random effect on intercept",y="random effect on slope of sex",title = "random effect by primary froup")+theme_bw()
+```
+It's really interesting that it has the negative relationship between the random effect on intercept and on sex slope.(collinearity with the two random effect, should discard one)
+
+## j.
+```{r }
+#Method 1
+data|> ggplot2::ggplot(aes(x=verbal,y=attain,colour = sex))+geom_point()+facet_wrap(~social)+labs(x="verbal",y="attain", title="The relation of attain with verbal groupped by social")+theme_bw()
+
+#Method 2
+M_j<-lmerTest::lmer(attain~ verbal_scale+sex+(verbal_scale+sex|social),data,REML = TRUE)
+#lme4::isSingular(M_j); lme4::rePCA(M_j), then discard the "sex" from the random effect
+M_j2<-lmerTest::lmer(attain~ verbal_scale+sex+(verbal_scale|social),data,REML = TRUE)
+performance::check_model(M_j2)
+# The VIF of the two fixed predictors are beyond 10. So we need consider drop the one, with collinearity.
+M_j2<-lmerTest::lmer(attain~ verbal_scale+sex+(verbal_scale|social),data,REML = TRUE)
+performance::check_model(M_j2)
+M_j3<-lmerTest::lmer(attain~ verbal_scale+(verbal_scale|social),data,REML = TRUE)
+performance::check_model(M_j3)
+ransom<-lme4::ranef(M_j3)$social
+fixed<-glmmTMB::fixef(M_j3)["verbal_scale"]
+ransom$deviation<-ransom$verbal_scale-fixed
+colnames(ransom)[1]="Intercept"
+ransom|> ggplot2::ggplot(aes(x=Intercept,y=deviation))+geom_point()+labs(x="random effect on intercept",y="random effect on slope of verbal",title = "random effect by social group")+theme_bw()
+```
+By combining the results from methods 1 and 2, we can see that the "social" factor is not clearly significant in identifying the model's influence on the intercept and/or slope at different levels of "social."
+
+## k.
+```{r }
+train_id<-sample(1:nrow(data),nrow(data)*0.7)
+Train_data<-data[train_id,]
+Test_data<-data[-train_id,]
+M_knew<-lmerTest::lmer(attain~verbal_scale+sex+(sex|primary),Train_data,REML = TRUE)
+M_k<-lmerTest::lmer(attain~verbal_scale+sex+social+(sex|primary),Train_data,REML=TRUE)
+predictnew<-predict(M_knew,Test_data,allow.new.levels=TRUE)
+predict<-predict(M_k,Test_data,allow.new.levels=TRUE)
+Test_errornew<-sqrt(sum((Test_data$attain-predictnew)^2))
+Test_error<-sqrt(sum((Test_data$attain-predict)^2))
+Test_errornew>Test_error
+all.equal(Test_errornew,Test_error,tolerance = 0.1)
+```
+We split the data into two parts, using a 70/30 ratio, and then tested the error rates of two models. One model retains the fixed effect of social factors, while the other discards it. Upon comparing the test errors of the two models, we found that the model which keeps the social fixed effect has a smaller error compared to the other model.
+
+## l.
+```{r }
+M_l<-lmerTest::lmer(attain~verbal_scale+sex+social+(1|primary),data,REML = TRUE)
+Aic_new<-AIC(M_l)
+Aic_ori<-AIC(model_3)
+Aic_new>Aic_ori
+
+#Hypothesis test one-LRT
+Test1<-anova(M_l,model_3)
+Test1$`Pr(>Chisq)`
+#Hypothesis test two-test statistics
+pbkrtest::PBmodcomp(M_l,model_3)
+```
+The random effect of sex by the primary group variable is significantly different from 0, as indicated by the likelihood ratio test. Additionally, the AIC suggests that the original model, which includes the random effect of sex on the slope, is better than the reduced model.
