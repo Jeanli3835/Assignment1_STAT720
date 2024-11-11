@@ -1,11 +1,18 @@
 ---
 title: "Assignment 3"
-format: html
+format: 
+   html:
+     embed-resources: true
 editor: visual
-
 ---
+
+<!-- BMB: this (globally suppressing warnings) is bad practice.
+     Do it only for the chunks where you need it and can't 
+	  otherwise get rid of the warnings
+	  -->
 ```{r global-options,include=FALSE}
 knitr::opts_chunk$set(warning = FALSE)
+options(bitmapType = "cairo") ## BMB: this is a weird thing for my system
 ```
 
 ```{r }
@@ -27,8 +34,11 @@ library(patchwork)
 ```
 Input the data from the package and transform the data to the specific way and scale the numeric predictor.
 ```{r }
+## BMB: don't call your data 'data' (or any other name of a built-in
+##  function). Usually works, but occasionally leads to hard-to-debug errors
 data<-mlmRev::ScotsSec
-View(data)
+## BMB: don't use View() in non-interactive settings
+## View(data)
 data$social<-as.factor(data$social)
 data$primary<-as.factor(data$primary)
 data$sex<-as.factor(data$sex)
@@ -192,7 +202,7 @@ lmeglmmTMB_est<-all.equal(verbal_scale[2,4],verbal_scale[3,4],tolerance=10^-4)
 lmeglmmTMB_sd<-all.equal(verbal_scale[2,5],verbal_scale[3,5],tolerance=0.01)
 lmeglmmTMB_df<-all.equal(verbal_scale[2,6],verbal_scale[3,6])
 lmeglmmTMB_pvalue<-all.equal(verbal_scale[2,7],verbal_scale[3,7],tolerance=10^-4)
-
+## BMB: try to repeat less code ... and not to cut-and-paste results (output should be programmatic)
 ```
 1).Intercept
 * lmer & lme- 
@@ -299,6 +309,8 @@ ransom|> ggplot2::ggplot(aes(x=Intercept,y=deviation))+geom_point()+labs(x="rand
 ```
 By combining the results from methods 1 and 2, we can see that the "social" factor is not clearly significant in identifying the model's influence on the intercept and/or slope at different levels of "social."
 
+**BMB**: don't combine 'clearly' with 'significant'
+
 ## k.
 ```{r }
 train_id<-sample(1:nrow(data),nrow(data)*0.7)
@@ -314,6 +326,9 @@ Test_errornew>Test_error
 all.equal(Test_errornew,Test_error,tolerance = 0.1)
 ```
 We split the data into two parts, using a 70/30 ratio, and then tested the error rates of two models. One model retains the fixed effect of social factors, while the other discards it. Upon comparing the test errors of the two models, we found that the model which keeps the social fixed effect has a smaller error compared to the other model.
+
+**BMB**: splitting data in this way doesn't work right when the data are grouped so that values are not all conditionally iid. If you want to do this, you need to split in a way that is stratified by clusters.
+
 
 ## l.
 ```{r }

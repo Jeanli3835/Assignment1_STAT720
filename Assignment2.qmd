@@ -1,7 +1,9 @@
 ---
 title: "Assignment2"
 author: "Jean(Naien) Li"
-format: html
+format: 
+   html:
+     embed-resources: true
 editor: visual
 execute: 
   warning: false
@@ -17,10 +19,12 @@ library(MASS)
 library(bbmle)
 library(brglm2)
 library(arm)
-library(lme4)
-library(brglm2)
 library(car)
 library(pscl)
+# these were included twice??
+## library(lme4)
+## library(brglm2)
+
 ```
 ## Question 1
 ```{r}
