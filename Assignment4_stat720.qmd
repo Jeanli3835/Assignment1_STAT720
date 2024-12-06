@@ -1,0 +1,334 @@
+---
+title: "Assignment4"
+author: "Jean Li"
+format: html
+editor: visual
+---
+
+```{r }
+library(dplyr)
+library(lme4)
+library(ggplot2)
+library(ggalt)
+library(performance)
+library(datawizard)
+library(dotwhisker)
+library(lattice)
+library(HSAUR3)
+library(MASS)
+library(GLMMadaptive)
+library(MCMCglmm)
+library(RTMB)
+library(Matrix)
+library(reformulas)
+```
+
+## question 1
+Exploratory analysis of the dataset revealed no missing values, allowing us to select a useful subset of the data.
+```{r }
+q1_data<-read.csv("olymp1.csv")
+q1_data<-q1_data[complete.cases(q1_data),]
+```
+### a.
+Set the gold medal as the response variable, and select "gdp," "pop," and "year" as the three continuous fixed effect predictor variables. Consider "country/team" and "year" as the groups for the random effect.
+```{r }
+q1_data<-q1_data|>dplyr::filter(medal=="Gold")|>dplyr::select(-"medal")|>dplyr::rename(country=team,gold_count=n)
+
+## Maximal model, with the two group variables and the interation with them
+max_model<-lme4::glmer(
+gold_count~ year+gdp+pop+(1+gdp+pop|country)+(1+gdp+pop|year)+(1|country:year),                                 data=q1_data, family=poisson)
+
+# By the warning, then scale the "gdp" and "pop" scale.
+q1_data<-datawizard::standardize(q1_data,select = c(gdp,pop))
+max_model2<-lme4::glmer(
+gold_count~ year+gdp+pop+(1+gdp+pop|country)+(1+gdp+pop|year)+(1|country:year),                     data=q1_data, family=poisson)
+```
+The maximal model includes a fixed effect with three continuous variables, two different group variables, and their interaction terms.
+
+### b.
+To determine whether the combination of country and year exists, we compare the number of observations for each country-year combination.
+```{r }
+table<-table(q1_data$country,q1_data$year)
+which(table>1)
+```
+The maximum number of observations for the combination is 1, which makes it too sparse. Additionally, it lacks the scale or variance in relation to the response variable within the combination. As a result, we cannot consider this combination to be meaningful for the model.
+
+### c.
+As the maximum model without including the random effects grouped by the combination of country and year, it shows convergence warnings when I fit the maximal model. Therefore, I consider choosing a simpler model.
+```{r }
+q1_model<-lme4::glmer(gold_count~ year+gdp+pop+(1+gdp+pop|country)+(1+gdp+pop|year),data=q1_data,family=poisson)
+```
+### d.
+Create some exploratory plots that show the changes in gold medals by country over the years. Additionally, generate plots that display the relationship between GDP and gold medal changes by country, as well as population and gold medal changes by country. Include another grouping variable related to the year. Also, create plots illustrating the relationship between GDP and gold medal changes over the years, and between population and gold medal changes over the years.
+```{r }
+q1_data|>ggplot2::ggplot(aes(x = year, y = gold_count, colour = country)) +
+  geom_line( )+theme_bw()+theme(legend.position = "none") + labs(title = "The change of the gold medals with the year by country",x = "Year",y = "Gold Count")
+
+q1_data|>ggplot2::ggplot(aes(x = gdp, y = gold_count, colour = country)) +
+  ggalt::geom_encircle() +
+  theme_bw() +
+  theme(legend.position = "none") +
+  labs(title = "The changes of gold medals with the GDP by country",
+       x = "GDP",
+       y = "Gold Count")
+
+q1_data|>ggplot2::ggplot(aes(x = gdp, y = gold_count, colour = as.factor(year))) +
+  ggalt::geom_encircle() +
+  theme_bw() +
+  labs(title = "The changes of gold medals with the GDP by year",
+       x = "GDP",
+       y = "Gold Count")
+
+q1_data|>ggplot2::ggplot(aes(x = pop, y = gold_count, colour = country))+ggalt::geom_encircle() +
+  theme_bw()+
+  theme(legend.position = "none") + 
+  labs(title = "The change of gold medal with the population by country",
+       x = "Population",
+       y = "Gold Count")
+
+q1_data|>ggplot2::ggplot(aes(x = pop, y = gold_count, colour = as.factor(year)))+ggalt::geom_encircle() +
+  theme_bw()+ 
+  labs(title = "The change of gold medal with the population by year",
+       x = "Population",
+       y = "Gold Count")
+```
+Grouping by year does not affect the gold medal difference based on population and GDP. Also, grouping by country does not affect the gold medal difference based on GDP.
+
+### e.
+First, simplify the model by the results of the exploratory plots.
+```{r }
+q1_model2<-lme4::glmer(gold_count~ year+gdp+pop+(1+gdp+pop|country)+(1|year),data=q1_data,family=poisson)
+performance::check_singularity(q1_model2)
+lme4::VarCorr(q1_model2)
+```
+Next, we find that the random effect of the intercept grouped by year is zero, so we can deduct it.
+```{r }
+q1_model3<-lme4::glmer(gold_count~ year+gdp+pop+(1+gdp+pop|country),data=q1_data,family=poisson)# warning
+
+# As rescale the continous variable of year, warning
+q1_data<-datawizard::standardize(q1_data,select = year)
+q1_model4<-lme4::glmer(gold_count~ year+gdp+pop+(1+gdp+pop|country),data=q1_data,family=poisson)
+lme4::VarCorr(q1_model4)
+
+# Deduct the gdp_scale as the variance is a little bit small. 
+q1_model5<-lme4::glmer(gold_count~ year+gdp+pop+(1+pop|country),data=q1_data,family=poisson)
+performance::check_singularity(q1_model5)
+```
+Finally, the model is fixed and then plot the diagnostic plots.
+```{r}
+q1_limodel<-glm(gold_count~ year+gdp+pop,data=q1_data,family=poisson)
+output2<-DHARMa::simulateResiduals(q1_limodel)
+plot(output2)
+
+q1_model_new<-q1_model5
+output<-DHARMa::simulateResiduals(q1_model_new)
+plot(output)
+# Compare the adjustment of the generalized linear model by the mixed model.
+```
+Now, comparing the mixed model with the generalized model reveals a clear adjustment. Although the residuals are significantly higher, we need to explore more relevant predictors; perhaps it's the methods. (The relative information is limited.)
+
+### f.
+We fixed the model and created coefficient plots for the fixed predictors and the random effect.
+```{r }
+dotwhisker::dwplot(q1_model_new)+theme_bw()+labs(title = "Coefficient Plot for Mixed Model",x = "Coefficient Estimation",y = "Predictors")
+lattice::dotplot(lme4::ranef(q1_model_new))
+```
+The estimation of the fixed predictors, year and GDP, is nearly zero, indicating that population is the most significant variable. In the random effects coefficients plot, while some countries show variations in the intercept, the changes in the slope related to population are the most notable across different countries. 
+Therefore, we can simplify the model by focusing solely on the population as the fixed predictor.
+
+## question 2
+Input the dataset and convert the response variable into a binary variable. Select the fixed predictors and the grouping variable.
+```{r }
+q2_data<-HSAUR3::toenail
+
+which(is.na(q2_data))
+
+q2_data$outcome_bi<-ifelse(q2_data$outcome=="moderate or severe",1,0)
+```
+### a.
+Model1: Pick the visit and treatment as the fixed variable, and patientID as the random effect group variable
+```{r }
+q2_maximal_M1<-lme4::glmer(
+  outcome_bi ~ treatment + visit + (1 + treatment+visit| patientID),
+  data = q2_data,
+  family = binomial
+)
+```
+Model2: Pick the visit as the fixed variable, and treatment as the random effect group variable
+```{r }
+q2_maximal_M2<-lme4::glmer(
+  outcome_bi ~  treatment+visit + (1  + visit| treatment),
+  data = q2_data,
+  family = binomial
+)
+```
+
+### c.
+Assuming two different random effect group variables as treatment or patient ID, model 1 has a warning. Therefore, consider simplifying.
+```{r }
+# Scale the visit
+q2_data<-datawizard::standardize(q2_data,select = visit)
+q2_maximal_M1<-lme4::glmer(
+  outcome_bi ~ treatment + visit + (1 + treatment+ visit| patientID),
+  data = q2_data,
+  family = binomial
+)
+```
+For model2, keep the maximal model.
+
+### d.
+For the model1, grouped by patientID, then plots the outcome changes with visit by patientID; outcome changes with treatment by patientID
+```{r }
+q2_data|>ggplot2::ggplot(aes(x=visit,y=outcome_bi,colour = patientID))+geom_line()+geom_point()+theme_bw()+theme(legend.position = "none") +labs(title = "The change of the outcome with the visit by patients",x = "Visit(Scale)",y = "Outcome_bi")
+
+q2_data|>ggplot2::ggplot(aes(x=outcome_bi,colour = patientID))+geom_histogram(position = "dodge")+theme_bw()+theme(legend.position = "none")+facet_wrap(~treatment)+labs(title = "The change of the outcome with the treatment by patients",x = "Outcome_bi")
+```
+For the model2, we plot the outcome changes with visit by treatment
+```{r }
+q2_data|>ggplot2::ggplot(aes(x=treatment))+geom_bar()+facet_wrap(~as.factor(outcome_bi))
+# It exists the influence with treatment, as treatment has the positive effect to relieve and "terbinafine" better.
+
+q2_data|>ggplot2::ggplot(aes(x=visit,y=outcome_bi,colour=treatment))+geom_line()+geom_point()+theme_bw()+theme(legend.position = "none") +labs(title = "The change of the outcome with the visit by treatment",x = "Visit(Scale)",y = "Outcome_bi")
+```
+For the model1 plots, the changes in treatment for patients are very similar. In the model2 plots, the different paths coincide with high probability.
+### e.
+For the model1, deduct the "treatment"from the random slope effect from the explotary plotting result. 
+```{r }
+
+q2_M1_1<-lme4::glmer(
+  outcome_bi ~ treatment + visit + (1 + visit| patientID),
+  data = q2_data,
+  family = binomial
+)
+performance::check_singularity(q2_M1_1)
+lme4::VarCorr(q2_M1_1)
+q2_M1_new<-q2_M1_1
+output<-DHARMa::simulateResiduals(q2_M1_new)
+plot(output)
+
+
+```
+For the model2, it's singular fit
+```{r }
+performance::check_singularity(q2_maximal_M2)
+lme4::VarCorr(q2_maximal_M2) # deduce the intercept part
+q2_M2_1<-lme4::glmer(
+  outcome_bi ~  treatment+visit + (0+visit| treatment),
+  data = q2_data,
+  
+  family = binomial
+)
+performance::check_singularity(q2_M2_1)
+output<-DHARMa::simulateResiduals(q2_M2_1)
+plot(output)
+```
+Compare the two models, the model2 is better choice, by the diagnostic plots.
+
+### f.
+Generate the different coefficient plots with the different approaches
+#### a).Completely pooled analysis
+```{r }
+Model_glm<- glm(outcome_bi~treatment+visit, data = q2_data, family = binomial)
+sum_1<-summary(Model_glm)
+coef_glm <-sum_1$coefficients[,1]
+```
+#### b).Penalized quasi-likelihood
+```{r }
+Model_PQL <- MASS::glmmPQL(outcome_bi ~ treatment + visit, random = ~ 0 + visit | treatment, family = binomial, data = q2_data, verbose = FALSE)
+summary(Model_PQL)
+coef_PQL <- lme4::fixef(Model_PQL)
+```
+#### c).Laplace approximation
+```{r }
+Model_laplace <- lme4::glmer(outcome_bi ~ treatment + visit + (0 + visit | treatment),data = q2_data, family = binomial)
+summary(Model_laplace)
+coef_laplace<-lme4::fixef(Model_laplace)
+```
+#### d).Adaptive Gauss-Hermite quadrature
+```{r }
+# nAGQ=10, 10 points
+Model_GH10 <-GLMMadaptive::mixed_model(fixed= outcome_bi~treatment+ visit, random = ~ 0 + visit|treatment, data = q2_data, family = binomial, nAGQ =10)
+Sum_2<-summary(Model_GH10)
+coef_GH10 <-Sum_2$coef_table[,1]
+
+# nAGQ=20, 20 points
+Model_GH20 <-GLMMadaptive::mixed_model(fixed= outcome_bi~treatment+ visit, random = ~ 0 + visit|treatment, data = q2_data, family = binomial, nAGQ =20)
+Sum_3<-summary(Model_GH20)
+coef_GH20 <-Sum_3$coef_table[,1]
+```
+#### e).Credible intervals from a Bayesian model
+Select from the MCMCglmm package, and priors is from the conjugate distribution. Then set the 
+```{r }
+priors <-list(R = list(V=1, fix=1),G = list(G1 =list(V =1, nu = 0.001)))
+Model_Bayes<-MCMCglmm::MCMCglmm(outcome_bi~ treatment+visit,random = ~ us(visit):treatment,family = "categorical",data = q2_data,prior = priors,verbose = FALSE)
+
+Sum_4<-summary(Model_Bayes)
+coef_Bayes<-Sum_4$solutions[,1]
+credible_I<-Sum_4$solutions[,2:3]
+```
+
+```{r }
+credible_I
+```
+In summary, compare the different estimates for the fixed effect predictors using various model fitting approaches and create the plots.
+```{r }
+Coefficients_est<-data.frame(Approach=rep(c("glm","PQL","Laplace","GH10","GH20","Bayes"),each=3),Coef_name=rep(c("(Intercept)","treatmentterbinafine","visit "),6),Est=c(coef_glm,coef_PQL,coef_laplace,coef_GH10,coef_GH20,coef_Bayes))
+
+
+Coefficients_est|>ggplot2::ggplot(aes(x=Coef_name,y=Est,colour = Approach))+geom_point(position = position_dodge(width = 0.6))+labs(title = "Comparison of Fixed-Effect Estimates by approaches",x = "Coefficients",y = "Estimation")+theme_bw()
+```
+If we set different scale parameters in the priors of the Bayesian model or distribution using other packages, will the posterior distribution mean yield different results? 
+
+Other approaches yield very similar results.
+
+#### g).State priors in the Bayesian model 
+```{r }
+priors
+```
+We set the residual variance, as v=1(binary response variable). 
+And the random effect variance with inverse-Wishart distribution(dimension one),v=1, degree of freedom is 0.001. 
+
+## question 4(Not very clearly)
+```{r }
+dd <- data.frame(Day = rep(c(0,2,4,6,8,10),each=9),
+Group = rep(rep(c("c","t1","t2"), each = 3), 6),
+Individual = rep(1:9,6),
+X = c(0.71,0.72,0.71,0.72,0.72,0.72,0.70,0.69,0.70,0.72,0.72,
+                       0.71,0.72,0.72,0.71,0.71,0.70,0.71,0.73,0.73,0.69,0.74,
+                       0.69,0.73,0.67,0.71,0.69,0.71,0.71,0.72,0.70,0.71,0.70,
+                       0.52,0.64,0.60,0.70,0.73,0.73,0.67,0.66,0.71,0.47,0.56,
+                       0.54,0.65,0.73,0.73,0.67,0.71,0.58,0.44,0.52,0.58))
+
+X_aR<-model.matrix(~ Group , data = dd)      
+X_aL<-model.matrix(~ Group, data = dd)      
+X_m<-model.matrix(~ Group, data = dd)
+X_s<-model.matrix(~ Group, data = dd)   
+Z<-model.matrix(~ 0 + Individual, data = dd)
+tmbdata <- list(y = dd$X,x = dd$Day,
+X_aR=X_aR,X_aL=X_aL,X_m=X_m,X_s=X_s)   
+
+pars0 <- list(
+  beta_aR = c(250,250,250),
+  beta_aL = c(250,0,0),
+  beta_m = rep(0, ncol(X_m)),
+  beta_s = rep(0, ncol(X_s)),
+  b = 0,
+  log_tau = 1,
+  log_sigma =1
+)
+
+ff <- function(pars) {
+  getAll(pars, tmbdata)
+  R0 <- drop(X_aR %*% beta_aR + Z*b)  
+  R1 <- drop(X_aL %*% beta_aL)        
+  location <- drop(X_m %*% beta_m)
+  scale <- drop(X_s %*% beta_s)        
+  mu <- (R0 - R1) /
+    (1+exp(-(x-location) / scale)) + R1
+  L1 <- -sum(dnorm(y, mean = mu, sd = exp(log_sigma), log = TRUE))
+  L2 <- -sum(dnorm(b, mean = 0, sd = exp(log_tau), log = TRUE))
+  
+  return(L1 + L2)
+}
+```
+
