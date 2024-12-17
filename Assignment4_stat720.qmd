@@ -1,11 +1,15 @@
 ---
 title: "Assignment4"
 author: "Jean Li"
-format: html
+format:
+  html:
+    embed-resources: true
 editor: visual
 ---
 
-```{r }
+<!-- https://stackoverflow.com/questions/75435391/create-self-contained-html-file-with-quarto -->
+
+```{r message=FALSE}
 library(dplyr)
 library(lme4)
 library(ggplot2)
