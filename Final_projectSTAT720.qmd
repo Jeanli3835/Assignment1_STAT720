@@ -1,11 +1,13 @@
 ---
 title: "STAT720 Project_Life Expectancy"
 author: "Jean(naien) Li"
-format: pdf
+format:
+  html:
+    embed-resources: true
 editor: visual
 ---
 
-```{r }
+```{r pkgs}
 #| warning: false
 
 library(ggplot2)
@@ -18,13 +20,13 @@ library(lme4)
 library(MCMCglmm)
 library(GLMMadaptive)
 library(nlme)
-library("DHARMa")
+library(DHARMa)
 library(tidyr)
 ```
 
 ## Background
 ### Dataset
-The dataset used in this project was sourced from the Kaggle website and focuses on life expectancy. It includes health factors for 193 countries, with data collected from the World Health Organization (WHO) repository, alongside corresponding economic information from the United Nations website. The analysis covers the years 2000 to 2015. The individual data files were merged into a single dataset. Countries with missing values were excluded from the final model, primarily because the missing data came from lesser-known countries such as Vanuatu, Tonga, Togo, and Cabo Verde, making it challenging to obtain complete information for these nations. However, some columns still contain missing values.\n
+The dataset used in this project was sourced from the Kaggle website and focuses on life expectancy. It includes health factors for 193 countries, with data collected from the World Health Organization (WHO) repository, alongside corresponding economic information from the United Nations website. The analysis covers the years 2000 to 2015. The individual data files were merged into a single dataset. Countries with missing values were excluded from the final model, primarily because the missing data came from lesser-known countries such as Vanuatu, Tonga, Togo, and Cabo Verde, making it challenging to obtain complete information for these nations. However, some columns still contain missing values.
 
 Consequently, the final merged file (final dataset) contains 22 columns and 2,938 rows. All predicting variables were then categorized into several broad groups: immunization-related factors, mortality factors, economic factors, and social factors.
 
@@ -37,13 +39,16 @@ Consequently, the final merged file (final dataset) contains 22 columns and 2,93
 ### Predictor & Response rv
 We will use life expectancy as the response variable, employing a Gaussian conditional distribution. Since there are many predictors, we will first apply an ordinary linear regression model to assess the linearity of the relationships. We will then consider the addition of splines and select the most relevant predictors through diagnostic plots and best subset feature selection. For the predictors chosen after feature selection, we will ensure that they are reasonable. Additionally, we will account for random effects grouped by country, which has been identified as a significant variable.
 #### data exploratory analysis
-```{r}
+```{r eda}
 #| warning: false
+
+## BMB: try not to suppress warnings unless you absolutely can't find
+##  another way to eliminate them
 
 data<-read.csv("Life Expectancy Data.csv")
 skimr::skim(data)
 
-# convert the caregorical variables to factor, and re-arrange the column. 
+# convert the categorical variables to factor, and re-arrange the column. 
 data$Country<-as.factor(data$Country)
 data$Status<-as.factor(data$Status)
 data<-data|>dplyr::select(colnames(data)[-4],Life.expectancy)
@@ -70,8 +75,8 @@ for (i in 4:ncol(data)-1) {
 }}
 ```
 #### linearity & best subset feature selection
-```{r }
-# ordinary linear model, testing the linearity and conditional distribution of response varaible
+```{r lin-sel}
+# ordinary linear model, testing the linearity and conditional distribution of response variable
 data_nocountry<-data|>dplyr::select(-Country)
 model1<-lm(Life.expectancy~.,data=data_nocountry)
 s<-summary(model1)
@@ -94,7 +99,7 @@ Life_expectancy~ adult_mortality+BMI+Diphtheria+HIV.AIDS+income_composition+scho
 3. If there are computational or singular fit problems, I will scale the continuous random variables (done), simplify the random effects structure, and use approximate methods like MCMCglmm.
 
 #### select,rename & priors chosen
-```{r }
+```{r sel-rename}
 data_new<-data|>dplyr::select(c(Country,Year,Status,Adult.Mortality,BMI,Diphtheria,HIV.AIDS,Income.composition.of.resources,Schooling,Life.expectancy))|>dplyr::rename(Adult=Adult.Mortality,HIV=HIV.AIDS,Income_composition=Income.composition.of.resources)
 
 # priors with fixed effects, random effects, residual variance 
@@ -120,7 +125,7 @@ I will choose the lme4 package as the frequentist baseline for handling linear m
 7. The plot highlights life expectancy based on health status, grouped by country. 
 8. The plot analyzes life expectancy by year, grouped by country. 
 9. The plot presents a histogram of life expectancy.
-```{r }
+```{r plots}
 data_new|> ggplot2::ggplot(aes(x =Adult , y =Life.expectancy, colour =Country)) + ggalt::geom_encircle() +
   theme_bw() +
   theme(legend.position = "none")+
@@ -165,13 +170,14 @@ The first and third plots tell us the difference of the changes of Adult mortali
 
 ### fit the model
 #### lme4
-```{r }
+```{r lme4-fit}
+#| cache: true
 model_lmemax<-lme4::lmer(Life.expectancy~Year+Status+Adult+BMI+Diphtheria+HIV+Income_composition+Schooling+(1+Status+Adult+BMI+Diphtheria+HIV+Income_composition+Schooling|Country),data = data_new)
 summary(model_lmemax)
 ```
 
 #### MCMCglmm (better to adjust the computational/statistical problem)
-```{r }
+```{r mcmcglmm}
 priors <- list(
   R = list(V=1, nu=0.002),        
   G = list(G1=list(V=diag(8),nu=8)), 
@@ -189,7 +195,7 @@ random= ~us(1+Status+Adult+BMI+ Diphtheria+HIV+Income_composition+Schooling):Cou
 summary(model_mcmcmax)
 ```
 #### nlme (Not GLMMadaptive,as too complex random structure)
-```{r }
+```{r nlme}
 #| eval: false
 
 model_nlmemax <- nlme::lme(
@@ -204,19 +210,21 @@ summary(model_nlmemax)
 ### model strategies
 #### Simplify random effects
 We fixed the model with the three packages and identified a convergence problem with the lme4/nlme package. First, we will simplify the random structure to resolve this issue.
-```{r }
+```{r simplify}
+#| cache: true
+
 performance::check_singularity(model_lmemax)
 lme4::VarCorr(model_lmemax)
-## lower varaince with the Adult and Diphtheria
+## lower variance with the Adult and Diphtheria
 
 model_lme1<-lme4::lmer(Life.expectancy~Year+Status+Adult+BMI+Diphtheria+HIV+Income_composition+Schooling+(1+Status+BMI+HIV+Income_composition+Schooling|Country),data = data_new)
 lme4::VarCorr(model_lme1)
-## lower varaince with BMI
+## lower variance with BMI
 
 model_lme2<-lme4::lmer(Life.expectancy~Year+Status+Adult+BMI+Diphtheria+HIV+Income_composition+Schooling+(1+Status+HIV+Income_composition+Schooling|Country),data = data_new)
 performance::check_singularity(model_lme2)
 lme4::VarCorr(model_lme2)
-## lower varaince with schooling
+## lower variance with schooling
 
 model_lme3<-lme4::lmer(Life.expectancy~Year+Status+Adult+BMI+Diphtheria+HIV+Income_composition+Schooling+(1+Status+HIV+Income_composition|Country),data = data_new)
 performance::check_singularity(model_lme3)
@@ -227,7 +235,7 @@ plot(output)
 I have resolved the issues and created a diagnostic plot (which is not ideal). However, we have alternative strategies to address these problems, such as increasing the maximum number of iterations. 
 Furthermore, we can effectively utilize the Bayesian approach with MCMCglmm without initially excluding any random effects.
 #### Bayesian optimization
-```{r }
+```{r bayes-opt}
 priors <- list(
   R = list(V=1, nu=0.002),        
   G = list(G1=list(V=diag(8),nu=8)), 
@@ -276,7 +284,7 @@ qqline(residuals_standardized, col = "red", lty = 4)
 ```
 Comparing the two models, the one with Bayesian optimization yields better results; however, the QQ plot indicates a poor fit. 
 Consider transforming the response variable using the log of the Gamma distribution.
-```{r }
+```{r trans-response}
 # Response variable transformation
 data_new$log_life<-log(data_new$Life.expectancy)
 priors <- list(
@@ -309,7 +317,7 @@ It yields better results with the residual plot and the QQ plot. Further adjustm
 In conclusion, we selected eight effective predictors, incorporating random slope effects for Status, HIV, Income Composition, and Schooling, grouped by country. Among these, the status related to the level of development has a significant impact, while Income Composition has a positive influence. Additionally, Schooling and HIV each have distinct effects on life expectancy, with one positively and the other negatively influencing it.
 
 ### fixed effect coefficient plots( not very clear)
-```{r }
+```{r fe-coef}
 posterior_s<-as.data.frame(model_mcmc3$Sol)
 posterior_summary<-posterior_s|>dplyr::summarise(across(everything(),list(mean = ~ mean(.),lower = ~ quantile(., 0.025),upper = ~ quantile(., 0.975))))|>tidyr::pivot_longer(cols = everything(),
 names_to =c("Parameter", ".value"),names_sep = "_")
@@ -338,7 +346,7 @@ summary_new|>ggplot2::ggplot(aes(x = reorder(Parameter, mean), y = mean)) +
 ```
 
 ### random effects plot
-```{r }
+```{r re-plot}
 random_effects<- model_mcmc3$VCV
 summary_r <-as.data.frame(random_effects)|>dplyr::summarise_all(list(
     mean = ~ mean(.),
